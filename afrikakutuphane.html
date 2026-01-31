@@ -515,25 +515,26 @@
         }
 
         function updateStats() {
-            let totalGroups = 0;
-            let cihatCount = 0;
-            let ayrilikCount = 0;
+            let uniqueNames = new Set();
+            let cihatSet = new Set();
+            let ayrilikSet = new Set();
 
             Object.values(countryData).forEach(c => {
                 if (c.groups) {
-                    totalGroups += c.groups.length;
                     c.groups.forEach(g => {
+                        const name = g.name_tr.trim();
+                        uniqueNames.add(name);
                         const cat = g.kategori || "Diğer";
-                        if (cat === "Cihatçı") cihatCount++;
-                        else if (cat === "Ayrılıkçı") ayrilikCount++;
+                        if (cat === "Cihatçı") cihatSet.add(name);
+                        else if (cat === "Ayrılıkçı") ayrilikSet.add(name);
                     });
                 }
             });
 
-            document.getElementById('total-groups').textContent = totalGroups;
+            document.getElementById('total-groups').textContent = uniqueNames.size;
             document.getElementById('total-countries').textContent = Object.keys(countryData).length;
-            document.getElementById('cihat-count').textContent = cihatCount;
-            document.getElementById('ayrilik-count').textContent = ayrilikCount;
+            document.getElementById('cihat-count').textContent = cihatSet.size;
+            document.getElementById('ayrilik-count').textContent = ayrilikSet.size;
         }
 
         function setFilter(filter) {
@@ -544,9 +545,11 @@
         }
 
         function renderCountries() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
             const container = document.getElementById('countries-container');
             container.innerHTML = '';
+
+            let seenGroups = new Set();
 
             Object.keys(countryData).sort((a, b) => {
                 const nameA = countryData[a].name_tr || a;
@@ -568,7 +571,13 @@
                         (g.name_tr && g.name_tr.toLowerCase().includes(searchTerm)) ||
                         country.name_tr.toLowerCase().includes(searchTerm);
 
-                    return matchesFilter && matchesSearch;
+                    if (!matchesFilter || !matchesSearch) return false;
+
+                    // Arama yapılıyorsa ve bu isim daha önce (başka ülkede) görüldüyse gösterme
+                    if (searchTerm && seenGroups.has(g.name_tr)) return false;
+                    if (searchTerm) seenGroups.add(g.name_tr);
+
+                    return true;
                 });
 
                 if (filteredGroups.length === 0) return;
@@ -580,7 +589,7 @@
                         <div class="country-name">${country.name_tr}</div>
                         <div class="country-count">${filteredGroups.length} örgüt</div>
                     </div>
-                    <div class="groups-list" id="groups-${id}">
+                    <div class="groups-list active" id="groups-${id}">
                         ${filteredGroups.map((g, idx) => {
                     const cat = g.kategori || "Diğer";
                     const catClass = cat === 'Cihatçı' ? 'category-cihat' :
