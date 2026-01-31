@@ -642,7 +642,17 @@
   },
   "TN": {
     "name_tr": "Tunus",
-    "groups": []
+    "groups": [
+      {
+        "name_tr": "DENEMER",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Aktif",
+        "details": {
+          "olusum_sureci": "<p>...</p>",
+          "grup_iliskileri": "<p>JNIM (Cemaat Nusret el-İslam vel-Müslimin) GRUBU İLE BAĞLANTILI</p>"
+        }
+      }
+    ]
   },
   "TZ": {
     "name_tr": "Tanzanya",
