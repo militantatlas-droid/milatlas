@@ -348,16 +348,7 @@
   },
   "LS": {
     "name_tr": "Lesotho",
-    "groups": [
-      {
-        "name_tr": "DÖNERCİ",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><strong>DÖNERCİGELDİ</strong></p><p><em>DÖNERCİGELDİ</em></p><p><u>DÖNERCİGELDİ</u></p>"
-        }
-      }
-    ]
+    "groups": []
   },
   "MA": {
     "name_tr": "Fas",
@@ -723,20 +714,6 @@
           "grup_iliskileri": "...",
           "diger_bilgiler": "...",
           "kaynakca": "..."
-        }
-      }
-    ]
-  },
-  "": {
-    "name_tr": null,
-    "groups": [
-      {
-        "name_tr": "DÖNERCİ",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><strong>DÖNERCİGELDİ</strong></p><p><em>DÖNERCİGELDİ</em></p><p><u>DÖNERCİGELDİ</u></p>",
-          "yonetim_yapisi": "<p><strong>DÖNERCİGELDİ</strong></p><p><em>DÖNERCİGELDİ</em></p><p><u>DÖNERCİGELDİ</u></p>"
         }
       }
     ]
