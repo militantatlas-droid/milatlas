@@ -707,12 +707,10 @@
         function processTextLinks(text) {
             if (!text || text === 'Bilgi yok') return text;
 
-            // Regex özel karakterlerini kaçış dizisine çeviren yardımcı fonksiyon
             function escapeRegExp(string) {
                 return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             }
 
-            // Tüm grup isimlerini topla
             const allGroupNames = new Set();
             Object.values(countryData).forEach(c => {
                 if (c.groups) c.groups.forEach(g => {
@@ -720,10 +718,10 @@
                 });
             });
 
-            // Uzun isimler önce işlensin
             const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
 
             let processedText = text;
+            let placeholders = [];
             const currentGroupName = countryData[currentCountryId].groups[currentGroupIdx].name_tr;
 
             sortedNames.forEach(name => {
@@ -734,8 +732,14 @@
                 const safeName = name.replace(/'/g, "\\'");
 
                 processedText = processedText.replace(regex, (match) => {
-                    return `<span class="interactive-link" onclick="goToGroupByName('${safeName}')">${match}</span>`;
+                    const p = `##LINK_${placeholders.length}##`;
+                    placeholders.push(`<span class="interactive-link" onclick="goToGroupByName('${safeName}')">${match}</span>`);
+                    return p;
                 });
+            });
+
+            placeholders.forEach((html, i) => {
+                processedText = processedText.replace(`##LINK_${i}##`, html);
             });
 
             return processedText;
