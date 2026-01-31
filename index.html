@@ -405,6 +405,15 @@
 
         // Init
         updateTexts();
+
+        // Close on Escape & Outside Click
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        document.getElementById('region-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'region-modal') closeModal();
+        });
     </script>
 
 </body>
