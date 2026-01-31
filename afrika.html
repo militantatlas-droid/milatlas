@@ -1439,6 +1439,11 @@
     function processTextLinks(text) {
       if (!text) return "";
 
+      // Regex özel karakterlerini kaçış dizisine çeviren yardımcı fonksiyon
+      function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
       // Tüm grup isimlerini topla (sadece unique olanlar)
       const allGroupNames = new Set();
       Object.values(countryData).forEach(c => {
@@ -1447,24 +1452,29 @@
         });
       });
 
-      // Metin içinde geçen grup isimlerini bul ve linkle
-      // Uzun isimler önce işlensin diye sıralıyoruz (örn: "El Kaide" vs "El Kaide Yemen Kolu")
+      // Uzun isimler önce işlensin diye sıralıyoruz
       const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
 
       let processedText = text;
 
       sortedNames.forEach(name => {
-        // Basit bir replace yaparsak HTML taglerinin içini bozabiliriz, dikkatli olunmalı.
-        // Şimdilik basitçe replace yapıyoruz ama zaten mevcut grubun ismini linklemeyelim.
-        if (name === currentGroup.name_tr) return;
+        // Mevcut grubun ismini linklemeyelim
+        if (currentGroup && name === currentGroup.name_tr) return;
 
+        // Özel karakterleri escape et
+        const escapedName = escapeRegExp(name);
         // Case insensitive replace için regex
-        const regex = new RegExp(`(${name})`, 'gi');
-        // Zaten linklenmiş olanları tekrar linklememek için kontrol zor, 
-        // ama bu basit yapıda "onclick" stringi içeren yerleri atlayabiliriz.
+        const regex = new RegExp(`(${escapedName})`, 'gi');
+
+        // Onclick için tırnak kaçışı
+        const safeName = name.replace(/'/g, "\\'");
 
         processedText = processedText.replace(regex, (match) => {
-          return `<span class="interactive-link" onclick="goToGroupByName('${name}')">${match}</span>`;
+          // Zaten linklenmiş bir yapının içindeysek tekrar linkleme yapma (basit kontrol)
+          // Ancak string replace ile bu zor, bu yüzden basitçe "onclick" kontrolü yapılabilir 
+          // ama bu replace match bağlamı vermez.
+          // En temiz yöntem: Henüz basit string replace yapıyoruz.
+          return `<span class="interactive-link" onclick="goToGroupByName('${safeName}')">${match}</span>`;
         });
       });
 
