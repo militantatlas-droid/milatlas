@@ -1278,19 +1278,22 @@
 
     // Veri Yükleme (Önce JSON, sonra LocalStorage)
     function loadFromStorage() {
-      fetch('trdata.json')
+      fetch('trdata.json?t=' + Date.now())
         .then(res => {
-          if (!res.ok) throw new Error("Dosya okunamadı");
+          if (!res.ok) throw new Error("Dosya okunamadı (404/500)");
           return res.json();
         })
         .then(data => {
+          if (Array.isArray(data)) {
+            console.error("HATA: JSON verisi bir liste (Array) formatında. Uygulama bir nesne (Object) bekliyor. Admin panelden verinizi kontrol edin.");
+          }
+          console.log("Veri başarıyla yüklendi:", Object.keys(data).length, "id bulundu.");
           countryData = data;
-          console.log("Veri trdata.json kaynağından yüklendi.");
           updateTotalCount();
           initMapInteractions();
         })
         .catch(err => {
-          console.warn("trdata.json yüklenemedi (Yerel dosya protokolü olabilir), LocalStorage deneniyor...", err);
+          console.warn("trdata.json yüklenemedi, LocalStorage deneniyor...", err);
 
           const s = localStorage.getItem('militan_db_v2');
           if (s) {
@@ -1298,13 +1301,15 @@
               countryData = JSON.parse(s);
               console.log("Veri LocalStorage'dan yüklendi.");
               updateTotalCount();
+              initMapInteractions();
             } catch (e) {
               console.error("LocalStorage verisi bozuk:", e);
+              initMapInteractions();
             }
           } else {
-            console.warn("LocalStorage'da veri bulunamadı. Admin panelden veri kaydedin.");
+            console.warn("Veri bulunamadı.");
+            initMapInteractions();
           }
-          initMapInteractions();
         });
     }
 
@@ -1578,4 +1583,21 @@
           resetApplicationState();
         }
       } else {
-        // PC/Tablet (Sağ Panel): SAĞA
+        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
+        if (touchEnd.x > touchStart.x + 70) {
+          resetApplicationState();
+        }
+      }
+    }
+    function backToCountry() {
+      dom.groupModal.classList.remove("active");
+      dom.countryModal.classList.add("active");
+    }
+    function closeLongModal() {
+      dom.longModal.classList.remove("active");
+      dom.groupModal.classList.add("active");
+    }
+  </script>
+</body>
+
+</html>
