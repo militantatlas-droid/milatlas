@@ -1058,6 +1058,16 @@
       });
     }
 
+    function openSidebar() {
+      const badge = document.getElementById('total-badge');
+      if (badge) badge.style.display = 'none';
+
+      dom.sidebar.classList.add("active");
+      dom.sidebarBackdrop.style.display = "block";
+      dom.searchFab.classList.add("hidden");
+      dom.searchInput.focus();
+    }
+
     function resetApplicationState() {
       const badge = document.getElementById('total-badge');
       if (badge) badge.style.display = 'block';
@@ -1261,21 +1271,36 @@
       dom.sidebarContent.innerHTML = html;
     }
 
-    // Veri Yükleme (LocalStorage Entegrasyonu)
+    // Veri Yükleme (Önce JSON, sonra LocalStorage)
     function loadFromStorage() {
-      const s = localStorage.getItem('militan_db_v2');
-      if (s) {
-        try {
-          countryData = JSON.parse(s);
-          console.log("Veri LocalStorage'dan yüklendi.");
+      fetch('trdata.json')
+        .then(res => {
+          if (!res.ok) throw new Error("Dosya okunamadı");
+          return res.json();
+        })
+        .then(data => {
+          countryData = data;
+          console.log("Veri trdata.json kaynağından yüklendi.");
           updateTotalCount();
-        } catch (e) {
-          console.error("LocalStorage verisi bozuk:", e);
-        }
-      } else {
-        console.warn("LocalStorage'da veri bulunamadı. Admin panelden veri kaydedin.");
-      }
-      initMapInteractions();
+          initMapInteractions();
+        })
+        .catch(err => {
+          console.warn("trdata.json yüklenemedi (Yerel dosya protokolü olabilir), LocalStorage deneniyor...", err);
+
+          const s = localStorage.getItem('militan_db_v2');
+          if (s) {
+            try {
+              countryData = JSON.parse(s);
+              console.log("Veri LocalStorage'dan yüklendi.");
+              updateTotalCount();
+            } catch (e) {
+              console.error("LocalStorage verisi bozuk:", e);
+            }
+          } else {
+            console.warn("LocalStorage'da veri bulunamadı. Admin panelden veri kaydedin.");
+          }
+          initMapInteractions();
+        });
     }
 
     function updateTotalCount() {
