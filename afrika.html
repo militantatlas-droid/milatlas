@@ -1202,6 +1202,7 @@
               if (gName && gName.toLowerCase().includes(term)) {
                 if (!seenGroups.has(gName)) {
                   seenGroups.add(gName);
+                  // Birden fazla ülkede varsa cName'i "X ve diğerleri" gibi yapabiliriz veya sadece ilkini gösteririz
                   matches.push({ cid, idx, gName: gName, cName: c.name_tr });
                 }
               }
@@ -1238,6 +1239,7 @@
           highlightMapByCategory(targetCategory);
 
           let matches = [];
+          let seenGroupsDetailed = new Set();
           Object.keys(countryData).forEach(cid => {
             const c = countryData[cid];
             if (c.groups) {
@@ -1245,7 +1247,10 @@
                 const cat = g.kategori || "Diğer";
                 if (cat === targetCategory || (targetCategory === "Diğer" && cat !== "Cihatçı" && cat !== "Ayrılıkçı")) {
                   if (!term || (g.name_tr && g.name_tr.toLowerCase().includes(term))) {
-                    matches.push({ cid, idx, gName: g.name_tr, cName: c.name_tr });
+                    if (!seenGroupsDetailed.has(g.name_tr)) {
+                      seenGroupsDetailed.add(g.name_tr);
+                      matches.push({ cid, idx, gName: g.name_tr, cName: c.name_tr });
+                    }
                   }
                 }
               });
@@ -1304,11 +1309,15 @@
     }
 
     function updateTotalCount() {
-      let total = 0;
+      const uniqueNames = new Set();
       Object.values(countryData).forEach(c => {
-        if (c.groups) total += c.groups.length;
+        if (c.groups) {
+          c.groups.forEach(g => {
+            if (g.name_tr) uniqueNames.add(g.name_tr.trim());
+          });
+        }
       });
-      document.getElementById('total-count-val').innerText = total;
+      document.getElementById('total-count-val').innerText = uniqueNames.size;
     }
 
     function highlightMapByCategory(category) {
@@ -1569,21 +1578,4 @@
           resetApplicationState();
         }
       } else {
-        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
-        if (touchEnd.x > touchStart.x + 70) {
-          resetApplicationState();
-        }
-      }
-    }
-    function backToCountry() {
-      dom.groupModal.classList.remove("active");
-      dom.countryModal.classList.add("active");
-    }
-    function closeLongModal() {
-      dom.longModal.classList.remove("active");
-      dom.groupModal.classList.add("active");
-    }
-  </script>
-</body>
-
-</html>
+        // PC/Tablet (Sağ Panel): SAĞA
