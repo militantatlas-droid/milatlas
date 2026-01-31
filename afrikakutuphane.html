@@ -660,11 +660,12 @@
                     </div>
                 `;
             } else if (tab === 'durum') {
+                const status = group.grup_durumu || (details && details.grup_durumu) || 'Bilgi yok';
                 content.innerHTML = `
                     <div style="text-align:left; max-width:600px; margin:0 auto;">
                         <div class="detail-section">
                             <div class="detail-title">Grup Durumu</div>
-                            <div class="detail-text">${group.grup_durumu || 'Bilgi yok'}</div>
+                            <div class="detail-text">${status}</div>
                         </div>
                     </div>
                 `;
