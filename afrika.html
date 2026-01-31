@@ -1192,33 +1192,37 @@
       }
       // 2. GRUP ARAMA
       else if (searchMode === 'group') {
-        let matches = [];
-        let seenGroups = new Set();
+        let groupMap = {}; // name -> { cid, idx, countries: [] }
         Object.keys(countryData).forEach(cid => {
           const c = countryData[cid];
           if (c.groups) {
             c.groups.forEach((g, idx) => {
               const gName = g.name_tr;
               if (gName && gName.toLowerCase().includes(term)) {
-                if (!seenGroups.has(gName)) {
-                  seenGroups.add(gName);
-                  // Birden fazla ülkede varsa cName'i "X ve diğerleri" gibi yapabiliriz veya sadece ilkini gösteririz
-                  matches.push({ cid, idx, gName: gName, cName: c.name_tr });
+                if (!groupMap[gName]) {
+                  groupMap[gName] = { cid, idx, gName: gName, countries: [c.name_tr] };
+                } else {
+                  if (!groupMap[gName].countries.includes(c.name_tr)) {
+                    groupMap[gName].countries.push(c.name_tr);
+                  }
                 }
               }
             });
           }
         });
+
+        let matches = Object.values(groupMap);
         matches.sort((a, b) => a.gName.localeCompare(b.gName));
 
         if (matches.length === 0) html = "<p style='color:#777;text-align:center'>Grup bulunamadı.</p>";
         else {
           matches.forEach(m => {
+            const countryText = m.countries.join(", ");
             html += `
                 <div class="result-item" onclick="goToGroup('${m.cid}', ${m.idx})">
                     <div>
                         <div style="font-weight:bold;color:#eee;">${m.gName}</div>
-                        <div style="font-size:11px;color:#888;">${m.cName}</div>
+                        <div style="font-size:11px;color:#888;">${countryText}</div>
                     </div>
                 </div>`;
           });
@@ -1238,8 +1242,7 @@
 
           highlightMapByCategory(targetCategory);
 
-          let matches = [];
-          let seenGroupsDetailed = new Set();
+          let groupMap = {};
           Object.keys(countryData).forEach(cid => {
             const c = countryData[cid];
             if (c.groups) {
@@ -1247,25 +1250,32 @@
                 const cat = g.kategori || "Diğer";
                 if (cat === targetCategory || (targetCategory === "Diğer" && cat !== "Cihatçı" && cat !== "Ayrılıkçı")) {
                   if (!term || (g.name_tr && g.name_tr.toLowerCase().includes(term))) {
-                    if (!seenGroupsDetailed.has(g.name_tr)) {
-                      seenGroupsDetailed.add(g.name_tr);
-                      matches.push({ cid, idx, gName: g.name_tr, cName: c.name_tr });
+                    const gName = g.name_tr;
+                    if (!groupMap[gName]) {
+                      groupMap[gName] = { cid, idx, gName, countries: [c.name_tr] };
+                    } else {
+                      if (!groupMap[gName].countries.includes(c.name_tr)) {
+                        groupMap[gName].countries.push(c.name_tr);
+                      }
                     }
                   }
                 }
               });
             }
           });
+
+          let matches = Object.values(groupMap);
           matches.sort((a, b) => a.gName.localeCompare(b.gName));
 
           if (matches.length === 0) html = "<p style='color:#777;text-align:center;padding:20px;'>Kayıt bulunamadı.</p>";
           else {
             matches.forEach(m => {
+              const countryText = m.countries.join(", ");
               html += `
                     <div class="result-item" onclick="goToGroup('${m.cid}', ${m.idx})">
                         <div>
                             <div style="font-weight:bold;color:#eee;">${m.gName}</div>
-                            <div style="font-size:11px;color:#888;">${m.cName}</div>
+                            <div style="font-size:11px;color:#888;">${countryText}</div>
                         </div>
                     </div>`;
             });
