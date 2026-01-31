@@ -479,7 +479,7 @@
 
         // Load data
         function loadData() {
-            fetch('trdata.json')
+            fetch('trdata.json?t=' + Date.now())
                 .then(response => {
                     if (!response.ok) throw new Error("JSON dosyası bulunamadı.");
                     return response.json();
@@ -487,31 +487,46 @@
                 .then(data => {
                     countryData = data;
                     console.log("Veri trdata.json dosyasından yüklendi.");
-
-                    // Filter by region if specified
-                    if (currentRegion && regionMap[currentRegion]) {
-                        const allowedCountries = regionMap[currentRegion];
-                        const filtered = {};
-                        Object.keys(countryData).forEach(id => {
-                            if (allowedCountries.includes(id)) {
-                                filtered[id] = countryData[id];
-                            }
-                        });
-                        countryData = filtered;
-                    }
-
-                    updateStats();
-                    renderCountries();
+                    processLoadedData();
                 })
                 .catch(err => {
-                    console.error("Veri yükleme hatası:", err);
-                    const container = document.getElementById('countries-container');
-                    container.innerHTML = `<div style="text-align:center; padding:2rem; color:#ef4444;">
-                        <h3>Veri Yüklenemedi</h3>
-                        <p>${err.message}</p>
-                        <p style="font-size:0.9rem; color:#94a3b8; margin-top:10px;">Not: Bu özellik yerel dosya olarak açıldığında çalışmayabilir. Lütfen bir yerel sunucu (localhost) kullanın.</p>
-                    </div>`;
+                    console.warn("trdata.json yüklenemedi, LocalStorage deneniyor...", err);
+                    const s = localStorage.getItem('militan_db_v2');
+                    if (s) {
+                        try {
+                            countryData = JSON.parse(s);
+                            processLoadedData();
+                        } catch (e) {
+                            showError(err.message);
+                        }
+                    } else {
+                        showError(err.message);
+                    }
                 });
+        }
+
+        function processLoadedData() {
+            // Filter by region if specified
+            if (currentRegion && regionMap[currentRegion]) {
+                const allowedCountries = regionMap[currentRegion];
+                const filtered = {};
+                Object.keys(countryData).forEach(id => {
+                    if (allowedCountries.includes(id)) {
+                        filtered[id] = countryData[id];
+                    }
+                });
+                countryData = filtered;
+            }
+            updateStats();
+            renderCountries();
+        }
+
+        function showError(msg) {
+            const container = document.getElementById('countries-container');
+            container.innerHTML = `<div style="text-align:center; padding:2rem; color:#ef4444;">
+                <h3>Veri Yüklenemedi</h3>
+                <p>${msg}</p>
+            </div>`;
         }
 
         function updateStats() {
@@ -649,7 +664,7 @@
                     <div style="text-align:left; max-width:600px; margin:0 auto;">
                         <div class="detail-section">
                             <div class="detail-title">Grup Durumu</div>
-                            <div class="detail-text">${details.grup_durumu || 'Bilgi yok'}</div>
+                            <div class="detail-text">${group.grup_durumu || 'Bilgi yok'}</div>
                         </div>
                     </div>
                 `;
@@ -697,9 +712,8 @@
             const info = sectionMap[section];
             if (info) {
                 let contentText = details[info.key] || 'Bilgi yok';
-                if (section === 'iliski' || section === 'diger') {
-                    contentText = processTextLinks(contentText);
-                }
+                // Tüm metin alanlarında linkleme yapalım
+                contentText = processTextLinks(contentText);
 
                 body.innerHTML = `
                     <div class="detail-section">
