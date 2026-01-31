@@ -352,7 +352,17 @@
   },
   "MA": {
     "name_tr": "Fas",
-    "groups": []
+    "groups": [
+      {
+        "name_tr": "deneme örgüt",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Aktif",
+        "details": {
+          "olusum_sureci": "<p>IŞİD-Batı Afrika</p>",
+          "grup_iliskileri": "<p>IŞİD-Batı Afrika ile bağlantılı</p>"
+        }
+      }
+    ]
   },
   "MG": {
     "name_tr": "Madagaskar",
