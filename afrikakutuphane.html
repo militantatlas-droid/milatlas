@@ -344,6 +344,20 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .interactive-link {
+            color: #eab308;
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .interactive-link:hover {
+            color: #4ade80;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
     </style>
 </head>
 
@@ -353,7 +367,8 @@
             <div class="logo">📚 MİLİTAN ATLAS - AFRİKA KÜTÜPHANESİ</div>
             <div class="header-actions">
                 <button class="btn btn-secondary" onclick="window.location.href='index.html'">← Ana Sayfa</button>
-                <button class="btn btn-primary" onclick="window.location.href='afrika.html' + window.location.search">🗺️
+                <button class="btn btn-primary"
+                    onclick="window.location.href='afrika.html' + window.location.search">🗺️
                     AFRİKA ATLASINA GÖZAT</button>
             </div>
         </div>
@@ -672,12 +687,75 @@
 
             const info = sectionMap[section];
             if (info) {
+                let contentText = details[info.key] || 'Bilgi yok';
+                if (section === 'iliski' || section === 'diger') {
+                    contentText = processTextLinks(contentText);
+                }
+
                 body.innerHTML = `
                     <div class="detail-section">
                         <div class="detail-title">${info.title}</div>
-                        <div class="detail-text">${details[info.key] || 'Bilgi yok'}</div>
+                        <div class="detail-text">${contentText}</div>
                     </div>
                 `;
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        // METİN İÇİ LİNKLEME (ÖRGÜT İSİMLERİ)
+        // ──────────────────────────────────────────────
+        function processTextLinks(text) {
+            if (!text || text === 'Bilgi yok') return text;
+
+            // Tüm grup isimlerini topla
+            const allGroupNames = new Set();
+            Object.values(countryData).forEach(c => {
+                if (c.groups) c.groups.forEach(g => {
+                    if (g.name_tr) allGroupNames.add(g.name_tr);
+                });
+            });
+
+            // Uzun isimler önce işlensin
+            const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
+
+            let processedText = text;
+            const currentGroupName = countryData[currentCountryId].groups[currentGroupIdx].name_tr;
+
+            sortedNames.forEach(name => {
+                if (name === currentGroupName) return;
+
+                const regex = new RegExp(`(${name})`, 'gi');
+                processedText = processedText.replace(regex, (match) => {
+                    return `<span class="interactive-link" onclick="goToGroupByName('${name}')">${match}</span>`;
+                });
+            });
+
+            return processedText;
+        }
+
+        function goToGroupByName(name) {
+            let foundCountryId = null;
+            let foundGroupIdx = null;
+
+            Object.keys(countryData).forEach(cid => {
+                const c = countryData[cid];
+                if (c.groups) {
+                    c.groups.forEach((g, idx) => {
+                        if (g.name_tr && g.name_tr.toLowerCase() === name.toLowerCase()) {
+                            foundCountryId = cid;
+                            foundGroupIdx = idx;
+                        }
+                    });
+                }
+            });
+
+            if (foundCountryId) {
+                // Mevcut detay modalını kapat
+                closeLongModal();
+                // Yeni grubu aç
+                openGroupModal(foundCountryId, foundGroupIdx);
+            } else {
+                alert("Bu grup veritabanında bulunamadı: " + name);
             }
         }
 
