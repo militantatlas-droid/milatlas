@@ -1398,9 +1398,11 @@
       }
       let html = "";
       if (tab === "temel") {
-        html = `<h3 style="color:#4ade80;">${currentGroup.kategori || "Militan Grup"}</h3>`;
+        const cat = currentGroup.kategori || (currentGroup.details && currentGroup.details.kategori) || "Militan Grup";
+        html = `<h3 style="color:#4ade80;">${cat}</h3>`;
       } else if (tab === "durum") {
-        html = `<h3 style="color:#fff;">${(currentGroup.details && currentGroup.details.grup_durumu) || "Bilinmiyor"}</h3>`;
+        const status = currentGroup.grup_durumu || (currentGroup.details && currentGroup.details.grup_durumu) || "Bilinmiyor";
+        html = `<h3 style="color:#fff;">${status}</h3>`;
       }
       dom.tabContent.innerHTML = html;
     }
