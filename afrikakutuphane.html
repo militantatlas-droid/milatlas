@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Militan Atlas - Kütüphane</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -256,6 +257,22 @@
             color: #eab308;
         }
 
+        .tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            pointer-events: none;
+            z-index: 2000;
+            display: none;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            white-space: nowrap;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
         .category-diger {
             background: rgba(59, 130, 246, 0.2);
             color: #3b82f6;
@@ -416,8 +433,12 @@
     <div id="group-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="modal-group-name">Grup Adı</h2>
-                <button class="close-btn" onclick="closeModal()">×</button>
+                <h2 id="modal-group-name">Örgüt İsmi</h2>
+                <div style="display:flex; gap:10px; align-items:center; margin-left:auto;">
+                    <button class="btn btn-primary" onclick="printGroupReport()"
+                        style="font-size:0.8rem; padding:0.5rem 1rem;"><i class="fas fa-print"></i> Rapor Al</button>
+                    <button class="btn-close" onclick="closeAllModals()">×</button>
+                </div>
             </div>
             <div class="modal-body">
                 <div class="filters" style="margin-bottom:1rem;">
@@ -564,61 +585,93 @@
             const container = document.getElementById('countries-container');
             container.innerHTML = '';
 
-            let seenGroups = new Set();
+            let groupMap = {}; // name -> { group, cid, gidx, countries: [] }
 
-            Object.keys(countryData).sort((a, b) => {
-                const nameA = countryData[a].name_tr || a;
-                const nameB = countryData[b].name_tr || b;
-                return nameA.localeCompare(nameB);
-            }).forEach(id => {
+            Object.keys(countryData).forEach(id => {
                 const country = countryData[id];
-                if (!country.groups || country.groups.length === 0) return;
+                if (country.groups) {
+                    country.groups.forEach((g, idx) => {
+                        const name = g.name_tr;
+                        const cat = g.kategori || "Diğer";
+                        // Filter check
+                        const matchesFilter = currentFilter === 'all' ||
+                            (currentFilter === 'cihat' && cat === 'Cihatçı') ||
+                            (currentFilter === 'ayrilik' && cat === 'Ayrılıkçı') ||
+                            (currentFilter === 'diger' && cat !== 'Cihatçı' && cat !== 'Ayrılıkçı');
 
-                // Filter groups
-                let filteredGroups = country.groups.filter(g => {
-                    const cat = g.kategori || "Diğer";
-                    const matchesFilter = currentFilter === 'all' ||
-                        (currentFilter === 'cihat' && cat === 'Cihatçı') ||
-                        (currentFilter === 'ayrilik' && cat === 'Ayrılıkçı') ||
-                        (currentFilter === 'diger' && cat !== 'Cihatçı' && cat !== 'Ayrılıkçı');
+                        const matchesSearch = !searchTerm ||
+                            (name && name.toLowerCase().includes(searchTerm)) ||
+                            country.name_tr.toLowerCase().includes(searchTerm);
 
-                    const matchesSearch = !searchTerm ||
-                        (g.name_tr && g.name_tr.toLowerCase().includes(searchTerm)) ||
-                        country.name_tr.toLowerCase().includes(searchTerm);
+                        if (matchesFilter && matchesSearch) {
+                            if (!groupMap[name]) {
+                                groupMap[name] = {
+                                    group: g,
+                                    cid: id,
+                                    gidx: idx,
+                                    countries: [country.name_tr]
+                                };
+                            } else {
+                                if (!groupMap[name].countries.includes(country.name_tr)) {
+                                    groupMap[name].countries.push(country.name_tr);
+                                }
+                            }
+                        }
+                    });
+                }
+            });
 
-                    if (!matchesFilter || !matchesSearch) return false;
+            const sortedGroups = Object.values(groupMap).sort((a, b) => a.group.name_tr.localeCompare(b.group.name_tr));
 
-                    // Arama yapılıyorsa ve bu isim daha önce (başka ülkede) görüldüyse gösterme
-                    if (searchTerm && seenGroups.has(g.name_tr)) return false;
-                    if (searchTerm) seenGroups.add(g.name_tr);
+            if (sortedGroups.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:2rem; color:#666;">Hiçbir örgüt bulunamadı.</p>';
+                return;
+            }
 
-                    return true;
-                });
+            // Global Liste Başlığı
+            const header = document.createElement('div');
+            header.style.textAlign = 'center';
+            header.style.padding = '1rem';
+            header.style.color = '#94a3b8';
+            header.style.fontSize = '0.9rem';
+            header.style.borderBottom = '1px solid #1e293b';
+            header.style.marginBottom = '1.5rem';
+            header.textContent = `Toplam ${sortedGroups.length} benzersiz örgüt listeleniyor.`;
+            container.appendChild(header);
 
-                if (filteredGroups.length === 0) return;
+            sortedGroups.forEach(m => {
+                const g = m.group;
+                const cat = g.kategori || "Diğer";
+                const catClass = cat === 'Cihatçı' ? 'category-cihat' :
+                    cat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
 
-                const section = document.createElement('div');
-                section.className = 'country-section';
-                section.innerHTML = `
-                    <div class="country-header" onclick="toggleCountry('${id}')">
-                        <div class="country-name">${country.name_tr}</div>
-                        <div class="country-count">${filteredGroups.length} örgüt</div>
+                const item = document.createElement('div');
+                item.className = 'group-item';
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.padding = '1.2rem';
+                item.style.background = 'rgba(30, 41, 59, 0.3)';
+                item.style.border = '1px solid #1e293b';
+                item.style.borderRadius = '12px';
+                item.style.marginBottom = '10px';
+                item.style.cursor = 'pointer';
+                item.style.transition = 'all 0.2s';
+
+                item.onmouseover = () => item.style.background = 'rgba(30, 41, 59, 0.6)';
+                item.onmouseout = () => item.style.background = 'rgba(30, 41, 59, 0.3)';
+
+                item.onclick = () => openGroupModal(m.cid, m.gidx);
+
+                item.innerHTML = `
+                    <div style="flex:1;">
+                        <div class="group-name" style="font-size:1.1rem; font-weight:700; color:#f1f5f9;">${g.name_tr}</div>
+                        <div style="font-size:0.85rem; color:#64748b; margin-top:5px; display:flex; align-items:center; gap:5px;">
+                            <i class="fas fa-globe-africa"></i> ${m.countries.join(", ")}
+                        </div>
                     </div>
-                    <div class="groups-list active" id="groups-${id}">
-                        ${filteredGroups.map((g, idx) => {
-                    const cat = g.kategori || "Diğer";
-                    const catClass = cat === 'Cihatçı' ? 'category-cihat' :
-                        cat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
-                    return `
-                                <div class="group-item" onclick="openGroupModal('${id}', ${country.groups.indexOf(g)})">
-                                    <div class="group-name">${g.name_tr}</div>
-                                    <div class="group-category ${catClass}">${cat}</div>
-                                </div>
-                            `;
-                }).join('')}
-                    </div>
+                    <div class="group-category ${catClass}" style="margin-left:15px; min-width:100px; text-align:center;">${cat}</div>
                 `;
-                container.appendChild(section);
+                container.appendChild(item);
             });
         }
 
@@ -815,6 +868,66 @@
         document.getElementById('group-modal').addEventListener('click', function (e) {
             if (e.target === this) closeModal();
         });
+
+        function printGroupReport() {
+            const group = countryData[currentCountryId].groups[currentGroupIdx];
+            const details = group.details || {};
+            const status = group.grup_durumu || (details && details.grup_durumu) || "Bilinmiyor";
+
+            const printWindow = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Rapor: ${group.name_tr}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; padding: 40px; line-height: 1.6; color: #1e293b; background: #fff; }
+                        .header { border-bottom: 3px solid #1e293b; padding-bottom: 15px; margin-bottom: 30px; display:flex; justify-content:space-between; align-items:center; }
+                        h1 { margin: 0; color: #0f172a; font-size: 24px; }
+                        .meta { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 14px; }
+                        .section { margin-bottom: 25px; page-break-inside: avoid; }
+                        .section-title { font-size: 16px; font-weight: bold; color: #1e293b; margin-bottom: 8px; border-left: 5px solid #3b82f6; padding-left: 12px; text-transform: uppercase; }
+                        .content { padding: 10px 15px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 14px; }
+                        .no-print { position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                        @media print { .no-print { display: none; } body { padding: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <button class="no-print" onclick="window.print()">YAZDIR / PDF KAYDET</button>
+                    <div class="header">
+                        <h1>MİLİTAN ATLASI - KÜTÜPHANE RAPORU</h1>
+                        <div style="font-size:12px; color:#64748b;">Oluşturma: ${new Date().toLocaleDateString('tr-TR')}</div>
+                    </div>
+                    <div class="meta">
+                        <div style="font-size:18px; font-weight:bold; color:#0f172a; margin-bottom:5px;">${group.name_tr}</div>
+                        <div><strong>Kategori:</strong> ${group.kategori || "Bilinmiyor"} | <strong>Durum:</strong> ${status}</div>
+                    </div>
+            `;
+
+            const sections = [
+                { title: 'Oluşum Süreci', key: 'olusum_sureci' },
+                { title: 'Nihai Hedef', key: 'nihai_hedef' },
+                { title: 'Yönetim ve Yapılanma', key: 'yonetim_yapisi' },
+                { title: 'Eylem Taktikleri', key: 'eylem_metotlari' },
+                { title: 'Önemli Eylemler', key: 'onemli_eylemler' },
+                { title: 'Finansman Kaynakları', key: 'finansman_kaynaklari' },
+                { title: 'İlişkiler', key: 'grup_iliskileri' },
+                { title: 'Diğer Bilgiler', key: 'diger_bilgiler' },
+                { title: 'Kaynakça', key: 'kaynakca' }
+            ];
+
+            sections.forEach(s => {
+                const val = details[s.key];
+                if (val && val.trim() !== "" && val !== "...") {
+                    html += `<div class="section"><div class="section-title">${s.title}</div><div class="content">${val}</div></div>`;
+                }
+            });
+
+            html += `<div style="margin-top:50px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px;">Militan Atlası Projesi - Tüm Hakları Saklıdır.</div></body></html>`;
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
 
         // Load on page load
         loadData();
