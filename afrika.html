@@ -532,6 +532,22 @@
 
       /* Tabları büyüt */
     }
+
+    .interactive-link {
+      color: #eab308;
+      /* Gold rengi, veya tema uyumlu başka bir renk */
+      font-weight: bold;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .interactive-link:hover {
+      color: #4ade80;
+      /* Hoverda yeşil olsun */
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
   </style>
 </head>
 
@@ -1385,50 +1401,73 @@
         case 'metot': title = "Kullandıkları Eylem Taktikleri"; text = d.eylem_metotlari; break;
         case 'eylem': title = "Eylemler"; text = d.onemli_eylemler; break;
         case 'finans': title = "Kaynak Temini"; text = d.finansman_kaynaklari; break;
-        case 'iliski': title = "Diğer Gruplarla İlişkiler"; text = d.grup_iliskileri; break;
-        case 'diger': title = "Diğer Bilgiler"; text = d.diger_bilgiler; break;
+        case 'iliski': title = "Diğer Gruplarla İlişkiler"; text = processTextLinks(d.grup_iliskileri); break;
+        case 'diger': title = "Diğer Bilgiler"; text = processTextLinks(d.diger_bilgiler); break;
         case 'kaynak': title = "Kaynakça"; text = d.kaynakca; break;
       }
       dom.longDetailBody.innerHTML = `<h3>${title}</h3>${text || noData}`;
     }
 
-    // Navigasyon Yardımcıları
-    function openSidebar() {
-      dom.sidebar.classList.add("active");
+    // ──────────────────────────────────────────────
+    // METİN İÇİ LİNKLEME (ÖRGÜT İSİMLERİ)
+    // ──────────────────────────────────────────────
+    function processTextLinks(text) {
+      if (!text) return "";
 
-      // Detaylı modda backdrop'u gösterme, haritayı aktif bırak
-      if (searchMode === 'detailed') {
-        dom.sidebarBackdrop.style.display = "none";
+      // Tüm grup isimlerini topla (sadece unique olanlar)
+      const allGroupNames = new Set();
+      Object.values(countryData).forEach(c => {
+        if (c.groups) c.groups.forEach(g => {
+          if (g.name_tr) allGroupNames.add(g.name_tr);
+        });
+      });
+
+      // Metin içinde geçen grup isimlerini bul ve linkle
+      // Uzun isimler önce işlensin diye sıralıyoruz (örn: "El Kaide" vs "El Kaide Yemen Kolu")
+      const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
+
+      let processedText = text;
+
+      sortedNames.forEach(name => {
+        // Basit bir replace yaparsak HTML taglerinin içini bozabiliriz, dikkatli olunmalı.
+        // Şimdilik basitçe replace yapıyoruz ama zaten mevcut grubun ismini linklemeyelim.
+        if (name === currentGroup.name_tr) return;
+
+        // Case insensitive replace için regex
+        const regex = new RegExp(`(${name})`, 'gi');
+        // Zaten linklenmiş olanları tekrar linklememek için kontrol zor, 
+        // ama bu basit yapıda "onclick" stringi içeren yerleri atlayabiliriz.
+
+        processedText = processedText.replace(regex, (match) => {
+          return `<span class="interactive-link" onclick="goToGroupByName('${name}')">${match}</span>`;
+        });
+      });
+
+      return processedText;
+    }
+
+    function goToGroupByName(name) {
+      // İsme göre grubu bul
+      let foundCountryId = null;
+      let foundGroupIdx = null;
+
+      Object.keys(countryData).forEach(cid => {
+        const c = countryData[cid];
+        if (c.groups) {
+          c.groups.forEach((g, idx) => {
+            if (g.name_tr && g.name_tr.toLowerCase() === name.toLowerCase()) {
+              foundCountryId = cid;
+              foundGroupIdx = idx;
+            }
+          });
+        }
+      });
+
+      if (foundCountryId) {
+        goToGroup(foundCountryId, foundGroupIdx);
       } else {
-        dom.sidebarBackdrop.style.display = "block";
+        alert("Bu grup veritabanında bulunamadı: " + name);
       }
-
-      dom.searchFab.classList.add("hidden");
-      const badge = document.getElementById('total-badge');
-      if (badge) badge.style.display = 'none';
-
-      if (!['country', 'group', 'detailed'].includes(searchMode)) setSearchMode('country');
-      else runSearch();
-    }
-
-    function goToCountry(id, name) {
-      resetApplicationState();
-      selectCountry(id, name, null);
-    }
-
-    function goToGroup(cid, idx) {
-      resetApplicationState();
-
-      currentCountryId = cid;
-      const cData = countryData[cid];
-      if (cData) {
-        dom.countryTitle.textContent = cData.name_tr;
-        let html = "";
-        cData.groups.forEach((g, i) => html += `<div class="group-item" onclick="openGroupDetail(${i})">${g.name_tr}</div>`);
-        dom.countryGroups.innerHTML = html;
-      }
-
-      openGroupDetail(idx);
     }
 
     function selectCountry(id, name, pathEl) {
