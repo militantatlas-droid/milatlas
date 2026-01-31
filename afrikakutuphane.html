@@ -100,6 +100,35 @@
             margin-bottom: 2rem;
             display: flex;
             align-items: center;
+            position: relative;
+        }
+
+        .search-clear {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: none;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        .search-clear:hover {
+            color: #f8fafc;
+        }
+
+        .stats.hidden-search {
+            display: none;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
             gap: 1rem;
         }
 
@@ -401,7 +430,8 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="search-input" placeholder="Grup veya ülke ara...">
+            <input type="text" id="search-input" placeholder="Grup veya ülke ara..." oninput="onSearchInput()">
+            <button id="search-clear-btn" class="search-clear" onclick="clearSearch()">×</button>
         </div>
 
         <div class="filters">
@@ -411,7 +441,7 @@
             <button class="filter-btn" onclick="setFilter('diger')">Diğer</button>
         </div>
 
-        <div class="stats">
+        <div class="stats" id="stats-section">
             <div class="stat-card">
                 <div class="stat-value" id="total-groups">0</div>
                 <div class="stat-label">Toplam Örgüt</div>
@@ -919,8 +949,39 @@
             closeAllModals();
         }
 
-        // Search
-        document.getElementById('search-input').addEventListener('input', renderCountries);
+        // Search logic with clear button and visibility management
+        function onSearchInput() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            const stats = document.getElementById('stats-section');
+            const isMobile = window.innerWidth <= 768;
+
+            if (input.value.length > 0) {
+                clearBtn.style.display = 'block';
+                if (isMobile) {
+                    stats.classList.add('hidden-search');
+                }
+            } else {
+                clearBtn.style.display = 'none';
+                stats.classList.remove('hidden-search');
+            }
+            renderCountries();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            input.value = "";
+            onSearchInput();
+            input.focus();
+        }
+
+        // Re-show stats on scroll if user starts scrolling through results
+        window.addEventListener('scroll', () => {
+            const stats = document.getElementById('stats-section');
+            if (stats.classList.contains('hidden-search') && window.scrollY > 20) {
+                stats.classList.remove('hidden-search');
+            }
+        });
 
         // Close modal on backdrop click
         document.getElementById('group-modal').addEventListener('click', function (e) {
