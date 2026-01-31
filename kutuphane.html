@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Militan Atlas - Kütüphane</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(139, 92, 246, 0.1);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-bar {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #f8fafc;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-bar input::placeholder {
+            color: #64748b;
+        }
+
+        .filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .filter-btn.active {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.6);
+        }
+
+        .filter-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #4ade80;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        .country-section {
+            margin-bottom: 2rem;
+        }
+
+        .country-header {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px 12px 0 0;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .country-header:hover {
+            background: #2d3748;
+        }
+
+        .country-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .country-count {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .groups-list {
+            background: #1a2332;
+            border: 1px solid #334155;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 0;
+            display: none;
+        }
+
+        .groups-list.active {
+            display: block;
+        }
+
+        .group-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .group-item:last-child {
+            border-bottom: none;
+        }
+
+        .group-item:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .group-name {
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .group-category {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .category-cihat {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .category-ayrilik {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+        .category-diger {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        /* Modal (same as index.html) */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #334155;
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #f8fafc;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #4ade80;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-text {
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">📚 MİLİTAN ATLAS - KÜTÜPHANE</div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="window.location.href='home.html'">← Ana Sayfa</button>
+                <button class="btn btn-primary" onclick="window.location.href='index.html' + window.location.search">🗺️
+                    Atlas</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="search-bar">
+            <svg style="width:20px;height:20px;color:#64748b;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-input" placeholder="Grup veya ülke ara...">
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="setFilter('all')">Tümü</button>
+            <button class="filter-btn" onclick="setFilter('cihat')">Cihatçı</button>
+            <button class="filter-btn" onclick="setFilter('ayrilik')">Ayrılıkçı</button>
+            <button class="filter-btn" onclick="setFilter('diger')">Diğer</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-groups">0</div>
+                <div class="stat-label">Toplam Örgüt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-countries">0</div>
+                <div class="stat-label">Ülke</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="cihat-count">0</div>
+                <div class="stat-label">Cihatçı</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="ayrilik-count">0</div>
+                <div class="stat-label">Ayrılıkçı</div>
+            </div>
+        </div>
+
+        <div id="countries-container"></div>
+    </div>
+
+    <!-- Group Detail Modal -->
+    <div id="group-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-group-name">Grup Adı</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="filters" style="margin-bottom:1rem;">
+                    <button class="filter-btn active" data-tab="temel"
+                        onclick="showTabContent('temel')">KATEGORİ</button>
+                    <button class="filter-btn" data-tab="durum" onclick="showTabContent('durum')">DURUM</button>
+                    <button class="filter-btn" data-tab="detay" onclick="showTabContent('detay')">DETAY GÖR</button>
+                </div>
+                <div id="tab-content" style="padding:1rem; text-align:center; min-height:100px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Long Detail Modal -->
+    <div id="long-detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="btn btn-secondary" onclick="closeLongModal()">← Geri</button>
+                <h2 class="modal-title">Detaylı Bilgi</h2>
+                <button class="close-btn" onclick="closeAllModals()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="filters" style="margin-bottom:1rem; flex-wrap:wrap;">
+                    <button class="filter-btn active" onclick="showLongTabContent('olusum')">Oluşumu</button>
+                    <button class="filter-btn" onclick="showLongTabContent('amac')">Amaç</button>
+                    <button class="filter-btn" onclick="showLongTabContent('yonetim')">Yönetim</button>
+                    <button class="filter-btn" onclick="showLongTabContent('metot')">Taktikler</button>
+                    <button class="filter-btn" onclick="showLongTabContent('eylem')">Eylemler</button>
+                    <button class="filter-btn" onclick="showLongTabContent('finans')">Kaynak</button>
+                    <button class="filter-btn" onclick="showLongTabContent('iliski')">İlişkiler</button>
+                    <button class="filter-btn" onclick="showLongTabContent('diger')">Diğer</button>
+                    <button class="filter-btn" onclick="showLongTabContent('kaynak')">Kaynakça</button>
+                </div>
+                <div id="long-detail-body" style="padding:1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let countryData = {};
+        let currentFilter = 'all';
+        let currentRegion = null;
+        let currentCountryId = null;
+        let currentGroupIdx = null;
+
+        // Region mapping
+        const regionMap = {
+            'africa': ['DZ', 'EG', 'LY', 'MA', 'TN', 'SD', 'SO', 'KE', 'TZ', 'UG', 'ZA', 'ZW', 'ZM', 'NG', 'ET', 'GH', 'CI', 'SN', 'ML', 'BF', 'NE', 'TD', 'CF', 'CM', 'GA', 'CG', 'CD', 'AO', 'MZ', 'MW', 'ZM', 'BW', 'NA', 'LS', 'SZ', 'MG', 'MU', 'SC', 'KM', 'DJ', 'ER', 'SS', 'RW', 'BI', 'TG', 'BJ', 'GW', 'SL', 'LR', 'GM', 'GN', 'GQ', 'ST'],
+            'middle-east': ['TR', 'SY', 'IQ', 'IR', 'SA', 'YE', 'AE', 'IL', 'JO', 'LB', 'KW', 'QA', 'BH', 'OM', 'PS'],
+            'asia': ['AF', 'PK', 'IN', 'BD', 'MM', 'TH', 'ID', 'MY', 'PH', 'CN', 'JP', 'KR', 'KP', 'VN', 'LA', 'KH', 'SG', 'BN', 'TL', 'MN', 'NP', 'BT', 'LK', 'MV'],
+            'europe': ['GB', 'FR', 'DE', 'ES', 'IT', 'RU', 'UA', 'PL', 'RO', 'NL', 'BE', 'GR', 'PT', 'CZ', 'HU', 'SE', 'AT', 'BY', 'RS', 'CH', 'BG', 'DK', 'FI', 'SK', 'NO', 'IE', 'HR', 'BA', 'GE', 'LT', 'SI', 'LV', 'EE', 'MK', 'AL', 'MD', 'MT', 'LU', 'ME', 'CY', 'AD', 'LI', 'MC', 'SM', 'VA', 'IS'],
+            'americas': ['US', 'CA', 'MX', 'BR', 'AR', 'CO', 'PE', 'VE', 'CL', 'EC', 'BO', 'PY', 'UY', 'GY', 'SR', 'GF', 'CR', 'PA', 'CU', 'DO', 'HT', 'JM', 'TT', 'BS', 'BB', 'LC', 'GD', 'VC', 'AG', 'DM', 'KN', 'NI', 'HN', 'SV', 'GT', 'BZ'],
+            'oceania': ['AU', 'NZ', 'PG', 'FJ', 'SB', 'VU', 'NC', 'PF', 'WS', 'KI', 'TO', 'FM', 'PW', 'MH', 'NR', 'TV']
+        };
+
+        // Get region from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentRegion = urlParams.get('region');
+
+        // Load data
+        function loadData() {
+            fetch('trdata.json')
+                .then(response => {
+                    if (!response.ok) throw new Error("JSON dosyası bulunamadı.");
+                    return response.json();
+                })
+                .then(data => {
+                    countryData = data;
+                    console.log("Veri trdata.json dosyasından yüklendi.");
+
+                    // Filter by region if specified
+                    if (currentRegion && regionMap[currentRegion]) {
+                        const allowedCountries = regionMap[currentRegion];
+                        const filtered = {};
+                        Object.keys(countryData).forEach(id => {
+                            if (allowedCountries.includes(id)) {
+                                filtered[id] = countryData[id];
+                            }
+                        });
+                        countryData = filtered;
+                    }
+
+                    updateStats();
+                    renderCountries();
+                })
+                .catch(err => {
+                    console.error("Veri yükleme hatası:", err);
+                    const container = document.getElementById('countries-container');
+                    container.innerHTML = `<div style="text-align:center; padding:2rem; color:#ef4444;">
+                        <h3>Veri Yüklenemedi</h3>
+                        <p>${err.message}</p>
+                        <p style="font-size:0.9rem; color:#94a3b8; margin-top:10px;">Not: Bu özellik yerel dosya olarak açıldığında çalışmayabilir. Lütfen bir yerel sunucu (localhost) kullanın.</p>
+                    </div>`;
+                });
+        }
+
+        function updateStats() {
+            let totalGroups = 0;
+            let cihatCount = 0;
+            let ayrilikCount = 0;
+
+            Object.values(countryData).forEach(c => {
+                if (c.groups) {
+                    totalGroups += c.groups.length;
+                    c.groups.forEach(g => {
+                        const cat = g.kategori || "Diğer";
+                        if (cat === "Cihatçı") cihatCount++;
+                        else if (cat === "Ayrılıkçı") ayrilikCount++;
+                    });
+                }
+            });
+
+            document.getElementById('total-groups').textContent = totalGroups;
+            document.getElementById('total-countries').textContent = Object.keys(countryData).length;
+            document.getElementById('cihat-count').textContent = cihatCount;
+            document.getElementById('ayrilik-count').textContent = ayrilikCount;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCountries();
+        }
+
+        function renderCountries() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const container = document.getElementById('countries-container');
+            container.innerHTML = '';
+
+            Object.keys(countryData).sort((a, b) => {
+                const nameA = countryData[a].name_tr || a;
+                const nameB = countryData[b].name_tr || b;
+                return nameA.localeCompare(nameB);
+            }).forEach(id => {
+                const country = countryData[id];
+                if (!country.groups || country.groups.length === 0) return;
+
+                // Filter groups
+                let filteredGroups = country.groups.filter(g => {
+                    const cat = g.kategori || "Diğer";
+                    const matchesFilter = currentFilter === 'all' ||
+                        (currentFilter === 'cihat' && cat === 'Cihatçı') ||
+                        (currentFilter === 'ayrilik' && cat === 'Ayrılıkçı') ||
+                        (currentFilter === 'diger' && cat !== 'Cihatçı' && cat !== 'Ayrılıkçı');
+
+                    const matchesSearch = !searchTerm ||
+                        (g.name_tr && g.name_tr.toLowerCase().includes(searchTerm)) ||
+                        country.name_tr.toLowerCase().includes(searchTerm);
+
+                    return matchesFilter && matchesSearch;
+                });
+
+                if (filteredGroups.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'country-section';
+                section.innerHTML = `
+                    <div class="country-header" onclick="toggleCountry('${id}')">
+                        <div class="country-name">${country.name_tr}</div>
+                        <div class="country-count">${filteredGroups.length} örgüt</div>
+                    </div>
+                    <div class="groups-list" id="groups-${id}">
+                        ${filteredGroups.map((g, idx) => {
+                    const cat = g.kategori || "Diğer";
+                    const catClass = cat === 'Cihatçı' ? 'category-cihat' :
+                        cat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
+                    return `
+                                <div class="group-item" onclick="openGroupModal('${id}', ${country.groups.indexOf(g)})">
+                                    <div class="group-name">${g.name_tr}</div>
+                                    <div class="group-category ${catClass}">${cat}</div>
+                                </div>
+                            `;
+                }).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function toggleCountry(id) {
+            const list = document.getElementById(`groups-${id}`);
+            list.classList.toggle('active');
+        }
+
+        function openGroupModal(countryId, groupIdx) {
+            currentCountryId = countryId;
+            currentGroupIdx = groupIdx;
+            const group = countryData[countryId].groups[groupIdx];
+            document.getElementById('modal-group-name').textContent = group.name_tr;
+
+            // Varsayılan olarak "Kategori" sekmesini göster
+            showTabContent('temel');
+
+            document.getElementById('group-modal').classList.add('active');
+        }
+
+        function showTabContent(tab) {
+            // Tab butonlarını güncelle
+            document.querySelectorAll('#group-modal .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-tab') === tab) btn.classList.add('active');
+            });
+
+            const group = countryData[currentCountryId].groups[currentGroupIdx];
+            const details = group.details || {};
+            const content = document.getElementById('tab-content');
+
+            if (tab === 'temel') {
+                const cat = group.kategori || 'Diğer';
+                const catClass = cat === 'Cihatçı' ? 'category-cihat' :
+                    cat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
+                content.innerHTML = `
+                    <div style="display:inline-block; padding:1rem 2rem; border-radius:12px;" class="${catClass}">
+                        <div style="font-size:2rem; font-weight:800;">${cat}</div>
+                    </div>
+                `;
+            } else if (tab === 'durum') {
+                content.innerHTML = `
+                    <div style="text-align:left; max-width:600px; margin:0 auto;">
+                        <div class="detail-section">
+                            <div class="detail-title">Grup Durumu</div>
+                            <div class="detail-text">${details.grup_durumu || 'Bilgi yok'}</div>
+                        </div>
+                    </div>
+                `;
+            } else if (tab === 'detay') {
+                content.innerHTML = `
+                    <button class="btn btn-primary" onclick="openLongModal()" style="font-size:1.2rem; padding:1rem 2rem;">
+                        📖 Tüm Detayları Görüntüle
+                    </button>
+                `;
+            }
+        }
+
+        function openLongModal() {
+            document.getElementById('long-detail-modal').classList.add('active');
+            showLongTabContent('olusum');
+        }
+
+        function showLongTabContent(section) {
+            // Tab butonlarını güncelle
+            document.querySelectorAll('#long-detail-modal .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Find the button that triggered the event or set 'olusum' as active if called directly
+            const targetButton = event ? event.target : document.querySelector('#long-detail-modal .filter-btn[onclick*="showLongTabContent(\'' + section + '\')"]');
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
+
+            const group = countryData[currentCountryId].groups[currentGroupIdx];
+            const details = group.details || {};
+            const body = document.getElementById('long-detail-body');
+
+            const sectionMap = {
+                'olusum': { title: 'Oluşum Süreci', key: 'olusum_sureci' },
+                'amac': { title: 'Nihai Hedef', key: 'nihai_hedef' },
+                'yonetim': { title: 'Yönetim ve Yapılanma', key: 'yonetim_yapilanma' },
+                'metot': { title: 'Eylem Taktikleri', key: 'eylem_taktikleri' },
+                'eylem': { title: 'Gerçekleştirilen Eylemler', key: 'gerceklestirilen_eylemler' },
+                'finans': { title: 'Kaynak Temini', key: 'kaynak_temini' },
+                'iliski': { title: 'Diğer Gruplarla İlişkiler', key: 'diger_gruplarla_iliskiler' },
+                'diger': { title: 'Diğer Bilgiler', key: 'diger_bilgiler' },
+                'kaynak': { title: 'Kaynakça', key: 'kaynakca' }
+            };
+
+            const info = sectionMap[section];
+            if (info) {
+                body.innerHTML = `
+                    <div class="detail-section">
+                        <div class="detail-title">${info.title}</div>
+                        <div class="detail-text">${details[info.key] || 'Bilgi yok'}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function closeLongModal() {
+            document.getElementById('long-detail-modal').classList.remove('active');
+        }
+
+        function closeAllModals() {
+            document.getElementById('group-modal').classList.remove('active');
+            document.getElementById('long-detail-modal').classList.remove('active');
+        }
+
+        function closeModal() {
+            closeAllModals();
+        }
+
+        // Search
+        document.getElementById('search-input').addEventListener('input', renderCountries);
+
+        // Close modal on backdrop click
+        document.getElementById('group-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Load on page load
+        loadData();
+    </script>
+</body>
+
+</html>
