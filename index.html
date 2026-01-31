@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Militan Atlas - Ana Sayfa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #f8fafc;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 4rem;
+            font-weight: 300;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(74, 222, 128, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.3);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-description {
+            font-size: 1rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #f8fafc;
+        }
+
+        .region-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .region-btn {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #f8fafc;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .region-btn:hover {
+            background: rgba(139, 92, 246, 0.3);
+            border-color: rgba(139, 92, 246, 0.6);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 2rem 1.5rem;
+            }
+
+            .region-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>MİLİTAN ATLAS</h1>
+        <p class="subtitle">Dünya Çapında Militan Örgütlerin İnteraktif Haritası ve Kütüphanesi</p>
+
+        <div class="cards">
+            <div class="card" onclick="openRegionModal('atlas')">
+                <div class="card-icon">🗺️</div>
+                <div class="card-title">ATLAS</div>
+                <div class="card-description">
+                    İnteraktif harita üzerinde militan örgütleri keşfedin, ülkelere tıklayarak detaylı bilgilere ulaşın.
+                </div>
+            </div>
+
+            <div class="card" onclick="openRegionModal('library')">
+                <div class="card-icon">📚</div>
+                <div class="card-title">KÜTÜPHANE</div>
+                <div class="card-description">
+                    Tüm örgütleri liste formatında görüntüleyin, arama yapın ve kategorilere göre filtreleyin.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Region Selection Modal -->
+    <div id="region-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Bölge Seçin</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="region-grid">
+                <button class="region-btn" onclick="selectRegion('africa')">🌍 Afrika</button>
+                <button class="region-btn" onclick="selectRegion('middle-east')">🕌 Orta Doğu</button>
+                <button class="region-btn" onclick="selectRegion('asia')">🏯 Asya</button>
+                <button class="region-btn" onclick="selectRegion('europe')">🏰 Avrupa</button>
+                <button class="region-btn" onclick="selectRegion('americas')">🗽 Amerika</button>
+                <button class="region-btn" onclick="selectRegion('oceania')">🏝️ Okyanusya</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMode = null;
+
+        function openRegionModal(mode) {
+            selectedMode = mode;
+            document.getElementById('region-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('region-modal').classList.remove('active');
+            selectedMode = null;
+        }
+
+        function selectRegion(region) {
+            if (!selectedMode) return;
+
+            const targetPage = selectedMode === 'atlas' ? 'index.html' : 'library.html';
+            window.location.href = `${targetPage}?region=${region}`;
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('region-modal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>
