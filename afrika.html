@@ -957,12 +957,17 @@
 
     // Veri Yükleme (Önce JSON, sonra LocalStorage)
     function loadData() {
-      const sources = ['trdata.json', 'incele.json'];
+      const sources = [
+        'trdata.json' + '?t=' + Date.now(),
+        'incele.json' + '?t=' + Date.now(),
+        'https://raw.githubusercontent.com/atlasturkiye/milat/main/trdata.json',
+        'https://raw.githubusercontent.com/atlasturkiye/milat/refs/heads/main/trdata.json'
+      ];
       let currentSourceIndex = 0;
 
       function tryNextSource() {
         if (currentSourceIndex < sources.length) {
-          const src = sources[currentSourceIndex] + '?t=' + Date.now();
+          const src = sources[currentSourceIndex];
           fetch(src)
             .then(res => {
               if (!res.ok) throw new Error(sources[currentSourceIndex] + " bulunamadı");
@@ -1322,9 +1327,6 @@
     }
 
     function highlightMapByCategory(category) {
-      let color = '#ef4444'; // Kırmızı - Tüm kategoriler için
-      let stroke = '#fca5a5'; // Açık kırmızı kenarlık
-
       document.querySelectorAll('svg path').forEach(p => {
         p.style.fill = ''; p.style.opacity = '0.2'; p.style.stroke = '';
 
@@ -1334,6 +1336,12 @@
           const gCat = g.kategori || "Diğer";
           return gCat === category || (category === "Diğer" && gCat !== "Cihatçı" && gCat !== "Ayrılıkçı");
         })) {
+          // Dinamik renk seçimi
+          let color = '#ef4444'; // Cihatçı (Kırmızı)
+          let stroke = '#fca5a5';
+          if (category === "Ayrılıkçı") { color = '#eab308'; stroke = '#fef08a'; }
+          else if (category === "Diğer") { color = '#3b82f6'; stroke = '#93c5fd'; }
+
           p.style.fill = color;
           p.style.opacity = '1';
           if (stroke) p.style.stroke = stroke;
@@ -1361,7 +1369,7 @@
       currentCountryId = cid;
       const cData = countryData[cid];
       if (cData) {
-        dom.countryTitle.textContent = cData.name_tr;
+        dom.countryTitle.textContent = getCountryNameTR(cid) || cData.name_tr;
         const target = document.getElementById(cid);
         if (target) {
           if (activePath) activePath.classList.remove("active");
@@ -1369,7 +1377,48 @@
           activePath = target;
         }
       }
+      // Çoklu ülke vurgulama
+      highlightGroupOnMap(cData.groups[idx].name_tr, cData.groups[idx].kategori);
       openGroupDetail(idx);
+    }
+
+    function highlightGroupOnMap(groupName, category) {
+      resetMapHighlights();
+      let color = '#ef4444';
+      if (category === "Ayrılıkçı") color = '#eab308';
+      else if (category === "Diğer") color = '#3b82f6';
+
+      Object.keys(countryData).forEach(id => {
+        const c = countryData[id];
+        if (c.groups && c.groups.some(g => g.name_tr === groupName)) {
+          const path = document.getElementById(id);
+          if (path) {
+            path.style.fill = color;
+            path.style.opacity = '1';
+            path.style.stroke = '#fff';
+            path.style.strokeWidth = '1px';
+          }
+        }
+      });
+    }
+
+    // Ülke İsimleri Çeviri Haritası
+    const countryNamesTR = {
+      "DZ": "Cezayir", "EG": "Mısır", "LY": "Libya", "MA": "Fas", "TN": "Tunus", "SD": "Sudan",
+      "SO": "Somali", "KE": "Kenya", "TZ": "Tanzanya", "UG": "Uganda", "ZA": "Güney Afrika",
+      "ZW": "Zimbabve", "ZM": "Zambiya", "NG": "Nijerya", "ET": "Etiyopya", "GH": "Gana",
+      "CI": "Fildişi Sahili", "SN": "Senegal", "ML": "Mali", "BF": "Burkina Faso", "NE": "Nijer",
+      "TD": "Çad", "CF": "Orta Afrika Cumhuriyeti", "CM": "Kamerun", "GA": "Gabon", "CG": "Kongo",
+      "CD": "Demokratik Kongo Cumhuriyeti", "AO": "Angola", "MZ": "Mozambik", "MW": "Malavi",
+      "BW": "Botsvana", "NA": "Namibya", "LS": "Lesoto", "SZ": "Svaziland", "MG": "Madagaskar",
+      "MU": "Mauritius", "SC": "Seyşeller", "KM": "Komorlar", "DJ": "Cibuti", "ER": "Eritre",
+      "SS": "Güney Sudan", "RW": "Ruanda", "BI": "Burundi", "TG": "Togo", "BJ": "Benin",
+      "GW": "Gine-Bissau", "SL": "Sierra Leone", "LR": "Liberya", "GM": "Gambiya", "GN": "Gine",
+      "GQ": "Ekvator Ginesi", "ST": "Sao Tome ve Principe", "EH": "Batı Sahra", "MR": "Moritanya"
+    };
+
+    function getCountryNameTR(id) {
+      return countryNamesTR[id] || (countryData[id] ? countryData[id].name_tr : id);
     }
 
     function openGroupDetail(idx) {
@@ -1402,13 +1451,18 @@
       if (tab === "temel") {
         const cat = currentGroup.kategori || (currentGroup.details && currentGroup.details.kategori) || "Militan Grup";
         const countries = findGroupCountries(currentGroup.name_tr);
+        const countriesTR = countries.map(c => {
+          // countryData içinde isme göre ID bul ve TR adını getir
+          const entry = Object.entries(countryData).find(([id, data]) => data.name_tr === c);
+          return entry ? getCountryNameTR(entry[0]) : c;
+        });
         html = `
           <h3 style="color:#4ade80; margin-bottom:15px;">${cat}</h3>
           <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid #444; text-align:left;">
             <div style="font-size:10px; color:#aaa; text-transform:uppercase; margin-bottom:5px;">Faaliyet Bölgeleri</div>
             <div style="font-size:13px; color:#eee;">
               <i class="fas fa-globe-africa" style="color:#4ade80; margin-right:5px;"></i>
-              ${countries.join(", ")}
+              ${countriesTR.join(", ")}
             </div>
           </div>
         `;
