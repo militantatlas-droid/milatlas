@@ -1703,4 +1703,35 @@
     }, { passive: true });
 
     dom.sidebar.addEventListener('touchend', e => {
-      touchEnd.x = e.changedTouc
+      touchEnd.x = e.changedTouches[0].screenX;
+      touchEnd.y = e.changedTouches[0].screenY;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        // Mobilde: AŞAĞI KAYDIRMA (Swipe Down) kapatır
+        if (touchEnd.y > touchStart.y + 70) {
+          resetApplicationState();
+        }
+      } else {
+        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
+        if (touchEnd.x > touchStart.x + 70) {
+          resetApplicationState();
+        }
+      }
+    }
+    function backToCountry() {
+      dom.groupModal.classList.remove("active");
+      dom.countryModal.classList.add("active");
+    }
+    function closeLongModal() {
+      dom.longModal.classList.remove("active");
+      dom.groupModal.classList.add("active");
+    }
+  </script>
+</body>
+
+</html>
