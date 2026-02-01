@@ -975,10 +975,12 @@
             input.focus();
         }
 
-        // Re-show stats on scroll if user starts scrolling through results
+        // Re-show stats on scroll ONLY if search is empty
         window.addEventListener('scroll', () => {
             const stats = document.getElementById('stats-section');
-            if (stats.classList.contains('hidden-search') && window.scrollY > 20) {
+            const searchInput = document.getElementById('search-input');
+            // Eğer arama kutusu doluysa, scroll yapsak bile istatistikleri geri getirme
+            if (stats.classList.contains('hidden-search') && window.scrollY > 20 && searchInput.value === "") {
                 stats.classList.remove('hidden-search');
             }
         });
