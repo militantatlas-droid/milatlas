@@ -1346,6 +1346,16 @@
       });
     }
 
+    function findGroupCountries(name) {
+      const countries = [];
+      Object.values(countryData).forEach(c => {
+        if (c.groups && c.groups.some(g => g.name_tr === name)) {
+          countries.push(c.name_tr);
+        }
+      });
+      return countries;
+    }
+
     function goToGroup(cid, idx) {
       // Sidebar'ı KAPATMA
       currentCountryId = cid;
@@ -1391,7 +1401,17 @@
       let html = "";
       if (tab === "temel") {
         const cat = currentGroup.kategori || (currentGroup.details && currentGroup.details.kategori) || "Militan Grup";
-        html = `<h3 style="color:#4ade80;">${cat}</h3>`;
+        const countries = findGroupCountries(currentGroup.name_tr);
+        html = `
+          <h3 style="color:#4ade80; margin-bottom:15px;">${cat}</h3>
+          <div style="background:rgba(0,0,0,0.3); padding:12px; border-radius:8px; border:1px solid #444; text-align:left;">
+            <div style="font-size:10px; color:#aaa; text-transform:uppercase; margin-bottom:5px;">Faaliyet Bölgeleri</div>
+            <div style="font-size:13px; color:#eee;">
+              <i class="fas fa-globe-africa" style="color:#4ade80; margin-right:5px;"></i>
+              ${countries.join(", ")}
+            </div>
+          </div>
+        `;
       } else if (tab === "durum") {
         const status = currentGroup.grup_durumu || (currentGroup.details && currentGroup.details.grup_durumu) || "Bilinmiyor";
         html = `<h3 style="color:#fff;">${status}</h3>`;
@@ -1683,35 +1703,4 @@
     }, { passive: true });
 
     dom.sidebar.addEventListener('touchend', e => {
-      touchEnd.x = e.changedTouches[0].screenX;
-      touchEnd.y = e.changedTouches[0].screenY;
-      handleSwipe();
-    }, { passive: true });
-
-    function handleSwipe() {
-      const isMobile = window.innerWidth <= 768;
-
-      if (isMobile) {
-        // Mobilde: AŞAĞI KAYDIRMA (Swipe Down) kapatır
-        if (touchEnd.y > touchStart.y + 70) {
-          resetApplicationState();
-        }
-      } else {
-        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
-        if (touchEnd.x > touchStart.x + 70) {
-          resetApplicationState();
-        }
-      }
-    }
-    function backToCountry() {
-      dom.groupModal.classList.remove("active");
-      dom.countryModal.classList.add("active");
-    }
-    function closeLongModal() {
-      dom.longModal.classList.remove("active");
-      dom.groupModal.classList.add("active");
-    }
-  </script>
-</body>
-
-</html>
+      touchEnd.x = e.changedTouc
