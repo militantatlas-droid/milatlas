@@ -773,7 +773,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h2 id="country-title">Ülke</h2>
-          <button class="btn-close" onclick="resetApplicationState()">×</button>
+          <button class="btn-close" onclick="closeModalOnly()">×</button>
         </div>
         <div class="modal-body" id="country-groups"></div>
       </div>
@@ -784,7 +784,7 @@
         <div class="modal-header">
           <button class="btn-back" onclick="backToCountry()">←</button>
           <h2 id="group-title" style="margin-left:10px;">Grup</h2>
-          <button class="btn-close" onclick="resetApplicationState()" style="margin-left:auto;">×</button>
+          <button class="btn-close" onclick="closeModalOnly()" style="margin-left:auto;">×</button>
         </div>
         <div class="modal-body">
           <div class="tabs">
@@ -805,7 +805,7 @@
           <button class="btn-report" onclick="printGroupReport()"
             style="margin-left:auto; margin-right:10px; background:#3b82f6; color:white; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-size:12px;"><i
               class="fas fa-print"></i> Rapor Al</button>
-          <button class="btn-close" onclick="resetApplicationState()" style="margin-left:0;">×</button>
+          <button class="btn-close" onclick="closeModalOnly()" style="margin-left:0;">×</button>
         </div>
         <div class="modal-body">
           <div class="long-tabs">
@@ -1059,7 +1059,7 @@
 
       document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) resetApplicationState();
+          if (e.target === modal) resetApplicationState(false);
         });
       });
     }
@@ -1074,22 +1074,33 @@
       dom.searchInput.focus();
     }
 
-    function resetApplicationState() {
+    function resetApplicationState(closeSidebar = true) {
       const badge = document.getElementById('total-badge');
-      if (badge) badge.style.display = 'block';
+      if (badge) badge.style.display = (closeSidebar ? 'block' : 'none');
 
       dom.countryModal.classList.remove("active");
       dom.groupModal.classList.remove("active");
       dom.longModal.classList.remove("active");
-      dom.sidebar.classList.remove("active");
-      dom.sidebarBackdrop.style.display = "none";
-      dom.searchFab.classList.remove("hidden");
+
+      if (closeSidebar) {
+        dom.sidebar.classList.remove("active");
+        dom.sidebarBackdrop.style.display = "none";
+        dom.searchFab.classList.remove("hidden");
+      }
+
       if (activePath) {
         activePath.classList.remove("active");
         activePath = null;
       }
       currentCountryId = null;
-      resetMapHighlights(); // Harita vurgularını temizle
+      resetMapHighlights();
+    }
+
+    // Sadece modalları kapatmak için (Sidebar açık kalsın diye)
+    function closeModalOnly() {
+      dom.countryModal.classList.remove("active");
+      dom.groupModal.classList.remove("active");
+      dom.longModal.classList.remove("active");
     }
 
     // Harita Arka Planına Tıklayınca Kapat
@@ -1268,8 +1279,8 @@
                         <span style="font-weight:bold;color:#fff;font-size:14px;">${m.name}</span>
                         <span style="font-size:10px;color:#aaa;background:#111;padding:2px 6px;border-radius:4px;">${m.category}</span>
                     </div>
-                    <div style="font-size:11px;color:#888;">
-                        <i class="fas fa-map-marker-alt"></i> ${countryNames}
+                    <div style="font-size:10px;color:#94a3b8;margin-top:4px;background:rgba(0,0,0,0.2);padding:4px 8px;border-radius:4px;width:100%;line-height:1.4;">
+                        <i class="fas fa-globe-africa" style="color:#4ade80;margin-right:5px;"></i>${countryNames}
                     </div>
                 </div>`;
           });
@@ -1700,15 +1711,4 @@
         }
       }
     }
-    function backToCountry() {
-      dom.groupModal.classList.remove("active");
-      dom.countryModal.classList.add("active");
-    }
-    function closeLongModal() {
-      dom.longModal.classList.remove("active");
-      dom.groupModal.classList.add("active");
-    }
-  </script>
-</body>
-
-</html>
+    fun
