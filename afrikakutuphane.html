@@ -802,11 +802,31 @@
             list.classList.toggle('active');
         }
 
+        // Ülke İsimleri Çeviri Haritası
+        const countryNamesTR = {
+            "DZ": "Cezayir", "EG": "Mısır", "LY": "Libya", "MA": "Fas", "TN": "Tunus", "SD": "Sudan",
+            "SO": "Somali", "KE": "Kenya", "TZ": "Tanzanya", "UG": "Uganda", "ZA": "Güney Afrika",
+            "ZW": "Zimbabve", "ZM": "Zambiya", "NG": "Nijerya", "ET": "Etiyopya", "GH": "Gana",
+            "CI": "Fildişi Sahili", "SN": "Senegal", "ML": "Mali", "BF": "Burkina Faso", "NE": "Nijer",
+            "TD": "Çad", "CF": "Orta Afrika Cumhuriyeti", "CM": "Kamerun", "GA": "Gabon", "CG": "Kongo",
+            "CD": "Demokratik Kongo Cumhuriyeti", "AO": "Angola", "MZ": "Mozambik", "MW": "Malavi",
+            "BW": "Botsvana", "NA": "Namibya", "LS": "Lesoto", "SZ": "Svaziland", "MG": "Madagaskar",
+            "MU": "Mauritius", "SC": "Seyşeller", "KM": "Komorlar", "DJ": "Cibuti", "ER": "Eritre",
+            "SS": "Güney Sudan", "RW": "Ruanda", "BI": "Burundi", "TG": "Togo", "BJ": "Benin",
+            "GW": "Gine-Bissau", "SL": "Sierra Leone", "LR": "Liberya", "GM": "Gambiya", "GN": "Gine",
+            "GQ": "Ekvator Ginesi", "ST": "Sao Tome ve Principe", "EH": "Batı Sahra", "MR": "Moritanya"
+        };
+
+        function getCountryNameTR(id) {
+            return countryNamesTR[id] || (countryData[id] ? countryData[id].name_tr : id);
+        }
+
         function findGroupCountries(name) {
             const countries = [];
-            Object.values(countryData).forEach(c => {
+            Object.keys(countryData).forEach(id => {
+                const c = countryData[id];
                 if (c.groups && c.groups.some(g => g.name_tr === name)) {
-                    countries.push(c.name_tr);
+                    countries.push(getCountryNameTR(id));
                 }
             });
             return countries;
@@ -1052,9 +1072,9 @@
 
             // Bulunduğu tüm ülkeleri bul
             let activeCountries = [];
-            Object.values(countryData).forEach(c => {
-                if (c.groups && c.groups.some(g => g.name_tr === group.name_tr)) {
-                    activeCountries.push(c.name_tr);
+            Object.keys(countryData).forEach(id => {
+                if (countryData[id].groups && countryData[id].groups.some(g => g.name_tr === group.name_tr)) {
+                    activeCountries.push(getCountryNameTR(id));
                 }
             });
 
