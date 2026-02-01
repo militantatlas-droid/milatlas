@@ -1216,15 +1216,15 @@
         const allIds = new Set([...Object.keys(countryData), ...Array.from(document.querySelectorAll('svg path')).map(p => p.id)]);
         allIds.forEach(id => {
           const cData = countryData[id];
-          const pEl = document.getElementById(id);
-          const name = cData ? cData.name_tr : (pEl ? pEl.getAttribute("data-name") : id);
+          const trName = getCountryNameTR(id);
 
           if (term === "küçük" || term === "kucuk") {
-            if (['GM', 'DJ', 'RW', 'BI', 'TG', 'BJ', 'GW', 'SL', 'LB'].includes(id)) matches.push({ id, name });
+            if (['GM', 'DJ', 'RW', 'BI', 'TG', 'BJ', 'GW', 'SL', 'LB'].includes(id)) matches.push({ id, name: trName });
           } else {
-            if (name && name.toLowerCase().includes(term)) matches.push({ id, name });
+            if (trName && trName.toLowerCase().includes(term)) matches.push({ id, name: trName });
           }
         });
+        // Türkçe alfabetik sıralama
         matches.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
         if (matches.length === 0) html = "<p style='color:#777;text-align:center;padding:20px;'>Ülke bulunamadı.</p>";
@@ -1259,22 +1259,23 @@
             c.groups.forEach((g, idx) => {
               const gName = g.name_tr;
               const gCat = g.kategori || "Diğer";
+              const cNameTR = getCountryNameTR(cid);
 
               const matchesCategory = !targetCategory || gCat === targetCategory ||
                 (targetCategory === "Diğer" && gCat !== "Cihatçı" && gCat !== "Ayrılıkçı");
 
-              const matchesTerm = !term || (gName && gName.toLowerCase().includes(term)) || (c.name_tr && c.name_tr.toLowerCase().includes(term));
+              const matchesTerm = !term || (gName && gName.toLowerCase().includes(term)) || (cNameTR && cNameTR.toLowerCase().includes(term));
 
               if (matchesCategory && matchesTerm) {
                 if (!groupMap[gName]) {
                   groupMap[gName] = {
                     name: gName,
                     category: gCat,
-                    countries: [{ id: cid, name: c.name_tr, gidx: idx }]
+                    countries: [{ id: cid, name: cNameTR, gidx: idx }]
                   };
                 } else {
                   if (!groupMap[gName].countries.some(ctr => ctr.id === cid)) {
-                    groupMap[gName].countries.push({ id: cid, name: c.name_tr, gidx: idx });
+                    groupMap[gName].countries.push({ id: cid, name: cNameTR, gidx: idx });
                   }
                 }
               }
@@ -1293,7 +1294,11 @@
             else if (m.category === "Ayrılıkçı") dotColor = "#eab308";
             else dotColor = "#3b82f6";
 
-            const countryNames = m.countries.map(c => c.name).join(", ");
+            const countryNamesArr = m.countries.map(c => c.name);
+            // Grup içi ülke isimlerini de alfabetik sıralayalım
+            countryNamesArr.sort((a, b) => a.localeCompare(b, 'tr'));
+            const countryNamesJoined = countryNamesArr.join(", ");
+
             const firstCountry = m.countries[0];
 
             html += `
@@ -1303,7 +1308,7 @@
                         <span style="font-size:10px;color:#aaa;background:#111;padding:2px 6px;border-radius:4px;">${m.category}</span>
                     </div>
                     <div style="font-size:10px;color:#94a3b8;margin-top:4px;background:rgba(0,0,0,0.2);padding:4px 8px;border-radius:4px;width:100%;line-height:1.4;">
-                        <i class="fas fa-globe-africa" style="color:#4ade80;margin-right:5px;"></i>${countryNames}
+                        <i class="fas fa-globe-africa" style="color:#4ade80;margin-right:5px;"></i>${countryNamesJoined}
                     </div>
                 </div>`;
           });
