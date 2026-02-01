@@ -1096,7 +1096,7 @@
       const term = dom.searchInput.value.toLowerCase().trim();
       let html = "";
 
-      // 1. ÜLKE ARAMA
+      // 1. ÜLKE ARA MODU
       if (searchMode === 'country') {
         let matches = [];
         const allIds = new Set([...Object.keys(countryData), ...Array.from(document.querySelectorAll('svg path')).map(p => p.id)]);
@@ -1105,17 +1105,15 @@
           const pEl = document.getElementById(id);
           const name = cData ? cData.name_tr : (pEl ? pEl.getAttribute("data-name") : id);
 
-          // Küçük Ülkeler Modu
           if (term === "küçük" || term === "kucuk") {
             if (['GM', 'DJ', 'RW', 'BI', 'TG', 'BJ', 'GW', 'SL', 'LB'].includes(id)) matches.push({ id, name });
           } else {
             if (name && name.toLowerCase().includes(term)) matches.push({ id, name });
           }
         });
+        matches.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-        matches.sort((a, b) => a.name.localeCompare(b.name));
-
-        if (matches.length === 0) html = "<p style='color:#777;text-align:center'>Bulunamadı.</p>";
+        if (matches.length === 0) html = "<p style='color:#777;text-align:center;padding:20px;'>Ülke bulunamadı.</p>";
         else {
           matches.forEach(m => {
             html += `
@@ -1127,81 +1125,79 @@
         }
         resetMapHighlights();
       }
-      // 2. GRUP ARAMA
-      else if (searchMode === 'group') {
-        let matches = [];
-        let seenGroups = new Set();
+      // 2. GRUP VEYA DETAYLI ARA MODU
+      else {
+        // Benzersiz örgütleri haritala: isim -> { data, countries: [ {id, name} ] }
+        let groupMap = {};
+        let targetCategory = null;
+
+        if (searchMode === 'detailed' && activeFilterCategory && activeFilterCategory !== 'all') {
+          if (activeFilterCategory === 'cihat') targetCategory = "Cihatçı";
+          else if (activeFilterCategory === 'ayrilik') targetCategory = "Ayrılıkçı";
+          else targetCategory = "Diğer";
+          highlightMapByCategory(targetCategory);
+        } else {
+          resetMapHighlights();
+        }
+
         Object.keys(countryData).forEach(cid => {
           const c = countryData[cid];
           if (c.groups) {
             c.groups.forEach((g, idx) => {
               const gName = g.name_tr;
-              if (gName && gName.toLowerCase().includes(term)) {
-                if (!seenGroups.has(gName)) {
-                  seenGroups.add(gName);
-                  matches.push({ cid, idx, gName: gName, cName: c.name_tr });
+              const gCat = g.kategori || "Diğer";
+
+              // Kategori Filtresi
+              const matchesCategory = !targetCategory || gCat === targetCategory ||
+                (targetCategory === "Diğer" && gCat !== "Cihatçı" && gCat !== "Ayrılıkçı");
+
+              // Arama Terimi Filtresi
+              const matchesTerm = !term || (gName && gName.toLowerCase().includes(term)) || (c.name_tr && c.name_tr.toLowerCase().includes(term));
+
+              if (matchesCategory && matchesTerm) {
+                if (!groupMap[gName]) {
+                  groupMap[gName] = {
+                    name: gName,
+                    category: gCat,
+                    countries: [{ id: cid, name: c.name_tr, gidx: idx }]
+                  };
+                } else {
+                  // Aynı örgüt başka bir ülkede de varsa ekle
+                  if (!groupMap[gName].countries.some(ctr => ctr.id === cid)) {
+                    groupMap[gName].countries.push({ id: cid, name: c.name_tr, gidx: idx });
+                  }
                 }
               }
             });
           }
         });
-        matches.sort((a, b) => a.gName.localeCompare(b.gName));
 
-        if (matches.length === 0) html = "<p style='color:#777;text-align:center'>Grup bulunamadı.</p>";
-        else {
-          matches.forEach(m => {
+        const sortedGroups = Object.values(groupMap).sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+
+        if (sortedGroups.length === 0) {
+          html = `<p style='color:#777;text-align:center;padding:20px;'>${searchMode === 'detailed' ? 'Kategoriye uygun kayıt bulunamadı.' : 'Grup bulunamadı.'}</p>`;
+        } else {
+          sortedGroups.forEach(m => {
+            let dotColor = "#888";
+            if (m.category === "Cihatçı") dotColor = "#ef4444";
+            else if (m.category === "Ayrılıkçı") dotColor = "#eab308";
+            else dotColor = "#3b82f6";
+
+            const countryNames = m.countries.map(c => c.name).join(", ");
+            // İlk bulunduğu ülkenin verisini kullanarak modal açılacak (genellikle veriler aynıdır)
+            const firstCountry = m.countries[0];
+
             html += `
-                <div class="result-item" onclick="goToGroup('${m.cid}', ${m.idx})">
-                    <div>
-                        <div style="font-weight:bold;color:#eee;">${m.gName}</div>
-                        <div style="font-size:11px;color:#888;">${m.cName}</div>
+                <div class="result-item" onclick="goToGroup('${firstCountry.id}', ${firstCountry.gidx})" style="flex-direction:column; align-items:flex-start; gap:4px; border-left:4px solid ${dotColor};">
+                    <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold;color:#fff;font-size:14px;">${m.name}</span>
+                        <span style="font-size:10px;color:#aaa;background:#111;padding:2px 6px;border-radius:4px;">${m.category}</span>
+                    </div>
+                    <div style="font-size:11px;color:#888;">
+                        <i class="fas fa-map-marker-alt"></i> ${countryNames}
                     </div>
                 </div>`;
           });
-        }
-        resetMapHighlights();
-      }
-      // 3. DETAYLI FİLTRE
-      else if (searchMode === 'detailed') {
-        if (!activeFilterCategory || activeFilterCategory === 'all') {
-          html = "<p style='color:#aaa;text-align:center;padding:20px;'>Lütfen yukarıdan bir kategori seçin.</p>";
-          resetMapHighlights();
-        } else {
-          let targetCategory = "";
-          if (activeFilterCategory === 'cihat') targetCategory = "Cihatçı";
-          else if (activeFilterCategory === 'ayrilik') targetCategory = "Ayrılıkçı";
-          else targetCategory = "Diğer";
-
-          highlightMapByCategory(targetCategory);
-
-          let matches = [];
-          Object.keys(countryData).forEach(cid => {
-            const c = countryData[cid];
-            if (c.groups) {
-              c.groups.forEach((g, idx) => {
-                const cat = g.kategori || "Diğer";
-                if (cat === targetCategory || (targetCategory === "Diğer" && cat !== "Cihatçı" && cat !== "Ayrılıkçı")) {
-                  if (!term || (g.name_tr && g.name_tr.toLowerCase().includes(term))) {
-                    matches.push({ cid, idx, gName: g.name_tr, cName: c.name_tr });
-                  }
-                }
-              });
-            }
-          });
-          matches.sort((a, b) => a.gName.localeCompare(b.gName));
-
-          if (matches.length === 0) html = "<p style='color:#777;text-align:center;padding:20px;'>Kayıt bulunamadı.</p>";
-          else {
-            matches.forEach(m => {
-              html += `
-                    <div class="result-item" onclick="goToGroup('${m.cid}', ${m.idx})">
-                        <div>
-                            <div style="font-weight:bold;color:#eee;">${m.gName}</div>
-                            <div style="font-size:11px;color:#888;">${m.cName}</div>
-                        </div>
-                    </div>`;
-            });
-          }
         }
       }
 
