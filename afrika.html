@@ -957,27 +957,47 @@
 
     // Veri Yükleme (Önce JSON, sonra LocalStorage)
     function loadData() {
-      fetch('trdata.json?t=' + Date.now())
-        .then(res => {
-          if (!res.ok) throw new Error("Dosya bulunamadı");
-          return res.json();
-        })
-        .then(data => {
-          countryData = data;
-          console.log("Veri yüklendi.");
-          updateTotalCount();
-          if (dom.searchInput.value) runSearch();
-        })
-        .catch(err => {
-          console.warn("JSON başarısız, LocalStorage deneniyor...");
+      const sources = ['trdata.json', 'incele.json'];
+      let currentSourceIndex = 0;
+
+      function tryNextSource() {
+        if (currentSourceIndex < sources.length) {
+          const src = sources[currentSourceIndex] + '?t=' + Date.now();
+          fetch(src)
+            .then(res => {
+              if (!res.ok) throw new Error(sources[currentSourceIndex] + " bulunamadı");
+              return res.json();
+            })
+            .then(data => {
+              if (data && typeof data === 'object' && !Array.isArray(data)) {
+                console.log("Veri yüklendi:", sources[currentSourceIndex]);
+                countryData = data;
+                updateTotalCount();
+                if (dom.searchInput && dom.searchInput.value) runSearch();
+              } else {
+                throw new Error("Geçersiz veri formatı: " + sources[currentSourceIndex]);
+              }
+            })
+            .catch(err => {
+              console.warn(err.message);
+              currentSourceIndex++;
+              tryNextSource();
+            });
+        } else {
           const s = localStorage.getItem('militan_db_v2');
           if (s) {
             try {
               countryData = JSON.parse(s);
+              console.log("Veri LocalStorage'dan yüklendi.");
               updateTotalCount();
+              if (dom.searchInput && dom.searchInput.value) runSearch();
             } catch (e) { console.error("LS Hata:", e); }
+          } else {
+            console.error("Hiçbir veri kaynağına ulaşılamadı.");
           }
-        });
+        }
+      }
+      tryNextSource();
     }
 
     function initListeners() {
@@ -1506,4 +1526,192 @@
       });
 
       html += `
-            <div style="margin-top:60px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; font-style: ital
+            <div style="margin-top:60px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; font-style: italic;">
+                Bu rapor Militan Atlası dijital veritabanından otomatik olarak oluşturulmuştur. <br>
+                © ${new Date().getFullYear()} Militan Atlası Projesi. Tüm hakları saklıdır.
+            </div>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+
+    // ──────────────────────────────────────────────
+    // METİN İÇİ LİNKLEME (ÖRGÜT İSİMLERİ)
+    // ──────────────────────────────────────────────
+    function processTextLinks(text) {
+      if (!text) return "";
+
+      function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      const allGroupNames = new Set();
+      Object.values(countryData).forEach(c => {
+        if (c.groups) c.groups.forEach(g => {
+          if (g.name_tr) allGroupNames.add(g.name_tr);
+        });
+      });
+
+      const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
+
+      let processedText = text;
+      let placeholders = [];
+
+      sortedNames.forEach(name => {
+        if (currentGroup && name === currentGroup.name_tr) return;
+
+        const escapedName = escapeRegExp(name);
+        const regex = new RegExp(`(${escapedName})`, 'gi');
+        const safeName = name.replace(/'/g, "\\'");
+
+        processedText = processedText.replace(regex, (match) => {
+          const p = `##LINK_${placeholders.length}##`;
+          placeholders.push(`<span class="interactive-link" onclick="goToGroupByName('${safeName}')">${match}</span>`);
+          return p;
+        });
+      });
+
+      // Placeholderları asıl linklerle değiştir
+      placeholders.forEach((html, i) => {
+        processedText = processedText.replace(`##LINK_${i}##`, html);
+      });
+
+      return processedText;
+    }
+
+    function goToGroupByName(name) {
+      // İsme göre grubu bul
+      let foundCountryId = null;
+      let foundGroupIdx = null;
+
+      Object.keys(countryData).forEach(cid => {
+        const c = countryData[cid];
+        if (c.groups) {
+          c.groups.forEach((g, idx) => {
+            if (g.name_tr && g.name_tr.toLowerCase() === name.toLowerCase()) {
+              foundCountryId = cid;
+              foundGroupIdx = idx;
+            }
+          });
+        }
+      });
+
+      if (foundCountryId) {
+        goToGroup(foundCountryId, foundGroupIdx);
+      } else {
+        alert("Bu grup veritabanında bulunamadı: " + name);
+      }
+    }
+
+    function selectCountry(id, name, pathEl) {
+      if (activePath) activePath.classList.remove("active");
+      const target = pathEl || document.getElementById(id);
+      if (target) {
+        target.classList.add("active");
+        activePath = target;
+      }
+      currentCountryId = id;
+      const cData = countryData[id];
+      const dispName = cData ? (cData.name_tr || name) : name;
+
+      dom.countryTitle.textContent = dispName;
+      let html = "";
+
+      // Detaylı modda ve aktif filtre varsa sadece o kategorideki grupları göster
+      let groupsToShow = [];
+      if (cData && cData.groups && cData.groups.length > 0) {
+        if (searchMode === 'detailed' && activeFilterCategory && activeFilterCategory !== 'all') {
+          let targetCategory = "";
+          if (activeFilterCategory === 'cihat') targetCategory = "Cihatçı";
+          else if (activeFilterCategory === 'ayrilik') targetCategory = "Ayrılıkçı";
+          else targetCategory = "Diğer";
+
+          cData.groups.forEach((g, idx) => {
+            const gCatRaw = g.kategori || "Diğer";
+            let gCat = gCatRaw;
+            if (gCatRaw.toLowerCase().includes("cihad") || gCatRaw.toLowerCase().includes("cihat")) gCat = "Cihatçı";
+            else if (gCatRaw.toLowerCase().includes("ayrilik") || gCatRaw.toLowerCase().includes("ayrılık")) gCat = "Ayrılıkçı";
+
+            if (gCat === targetCategory || (targetCategory === "Diğer" && gCat !== "Cihatçı" && gCat !== "Ayrılıkçı")) {
+              groupsToShow.push({ g, idx, gCat });
+            }
+          });
+        } else {
+          // Normal mod: tüm grupları göster
+          cData.groups.forEach((g, idx) => {
+            const gCatRaw = g.kategori || "Diğer";
+            let gCat = gCatRaw;
+            if (gCatRaw.toLowerCase().includes("cihad") || gCatRaw.toLowerCase().includes("cihat")) gCat = "Cihatçı";
+            else if (gCatRaw.toLowerCase().includes("ayrilik") || gCatRaw.toLowerCase().includes("ayrılık")) gCat = "Ayrılıkçı";
+            groupsToShow.push({ g, idx, gCat });
+          });
+        }
+
+        if (groupsToShow.length > 0) {
+          groupsToShow.forEach(({ g, idx, gCat }) => {
+            let dotColor = "#888";
+            if (gCat === "Cihatçı") dotColor = "#ef4444";
+            else if (gCat === "Ayrılıkçı") dotColor = "#eab308";
+            else dotColor = "#3b82f6";
+
+            html += `<div class="group-item" onclick="openGroupDetail(${idx})" style="border-left-color:${dotColor};">
+                            ${g.name_tr} 
+                            <span style="float:right;font-size:10px;color:#aaa;background:#333;padding:2px 6px;border-radius:4px;">${gCat}</span>
+                         </div>`;
+          });
+        } else {
+          html = "<p style='text-align:center;color:#666;padding:20px;'>Bu kategoride grup bulunamadı.</p>";
+        }
+      } else {
+        html = "<p style='text-align:center;color:#666;padding:20px;'>Kayıtlı grup bulunamadı.</p>";
+      }
+      dom.countryGroups.innerHTML = html;
+      dom.countryModal.classList.add("active");
+    }
+    // ──────────────────────────────────────────────
+    // MOBİL SWIPE MANTIĞI (KAPATMAK İÇİN)
+    // ──────────────────────────────────────────────
+    let touchStart = { x: 0, y: 0 };
+    let touchEnd = { x: 0, y: 0 };
+
+    dom.sidebar.addEventListener('touchstart', e => {
+      touchStart.x = e.changedTouches[0].screenX;
+      touchStart.y = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    dom.sidebar.addEventListener('touchend', e => {
+      touchEnd.x = e.changedTouches[0].screenX;
+      touchEnd.y = e.changedTouches[0].screenY;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const isMobile = window.innerWidth <= 768;
+
+      if (isMobile) {
+        // Mobilde: AŞAĞI KAYDIRMA (Swipe Down) kapatır
+        if (touchEnd.y > touchStart.y + 70) {
+          resetApplicationState();
+        }
+      } else {
+        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
+        if (touchEnd.x > touchStart.x + 70) {
+          resetApplicationState();
+        }
+      }
+    }
+    function backToCountry() {
+      dom.groupModal.classList.remove("active");
+      dom.countryModal.classList.add("active");
+    }
+    function closeLongModal() {
+      dom.longModal.classList.remove("active");
+      dom.groupModal.classList.add("active");
+    }
+  </script>
+</body>
+
+</html>
