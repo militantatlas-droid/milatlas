@@ -83,7 +83,8 @@
     }
 
     svg path.active {
-      fill: #ff4444 !important;
+      fill: #ff4444;
+      /* Bu değer JS tarafından ezilecek */
       stroke: #fff;
       stroke-width: 2.5;
     }
@@ -1398,6 +1399,7 @@
         if (c.groups && c.groups.some(g => g.name_tr === groupName)) {
           const path = document.getElementById(id);
           if (path) {
+            path.classList.add("active");
             path.style.fill = color;
             path.style.opacity = '1';
             path.style.stroke = '#fff';
@@ -1792,5 +1794,3 @@
     }
   </script>
 </body>
-
-</html>
