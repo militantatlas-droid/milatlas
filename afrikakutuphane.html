@@ -541,12 +541,17 @@
 
         // Load data
         function loadData() {
-            const sources = ['trdata.json', 'incele.json'];
+            const sources = [
+                'trdata.json' + '?t=' + Date.now(),
+                'incele.json' + '?t=' + Date.now(),
+                'https://raw.githubusercontent.com/atlasturkiye/milat/main/trdata.json',
+                'https://raw.githubusercontent.com/atlasturkiye/milat/refs/heads/main/trdata.json'
+            ];
             let currentSourceIndex = 0;
 
             function tryNextSource() {
                 if (currentSourceIndex < sources.length) {
-                    const src = sources[currentSourceIndex] + '?t=' + Date.now();
+                    const src = sources[currentSourceIndex];
                     fetch(src)
                         .then(res => {
                             if (!res.ok) throw new Error(sources[currentSourceIndex] + " bulunamadı");
@@ -1106,4 +1111,53 @@
                             <div class="meta-value">${status}</div>
                         </div>
                         <div class="meta-box" style="grid-column: span 2;">
-       
+                            <div class="meta-label">AKTİF OLDUĞU BÖLGELER / ÜLKELER</div>
+                            <div class="meta-value">${activeCountries.join(", ")}</div>
+                        </div>
+                    </div>
+            `;
+
+            const sections = [
+                { title: 'Oluşumu ve Tarihsel Gelişimi', key: 'olusum_sureci' },
+                { title: 'Amaç ve Nihai Hedefler', key: 'nihai_hedef' },
+                { title: 'Yönetim Yapısı ve Liderlik Kadrosu', key: 'yonetim_yapisi' },
+                { title: 'Eylem Metotları ve Taktiksel Yaklaşımlar', key: 'eylem_metotlari' },
+                { title: 'Kritik Eylemler ve Operasyonel Geçmiş', key: 'onemli_eylemler' },
+                { title: 'Finansman Kaynakları ve Lojistik Ağlar', key: 'finansman_kaynaklari' },
+                { title: 'Uluslararası İlişkiler ve İttifaklar', key: 'grup_iliskileri' },
+                { title: 'Stratejik Analiz ve Diğer Veriler', key: 'diger_bilgiler' },
+                { title: 'Kaynakça ve Veri Doğrulama', key: 'kaynakca' }
+            ];
+
+            sections.forEach(s => {
+                const val = details[s.key];
+                if (val && val.trim() !== "" && val !== "...") {
+                    // HTML taglerini temizlemeden veya koruyarak içeriği ekle
+                    html += `
+                        <div class="section">
+                            <div class="section-title">${s.title}</div>
+                            <div class="content">${val}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            html += `
+                    <div style="margin-top:60px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; font-style: italic;">
+                        Bu rapor Militan Atlası dijital veritabanından otomatik olarak oluşturulmuştur. <br>
+                        © ${new Date().getFullYear()} Militan Atlası Projesi. Tüm hakları saklıdır.
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+
+        // Load on page load
+        loadData();
+    </script>
+</body>
+
+</html>
