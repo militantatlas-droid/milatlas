@@ -921,31 +921,15 @@
       setTransform();
     }
 
-    // Olay Dinleyicileri Ekle
-    mapWrapper.addEventListener('mousedown', onPointerDown);
-    mapWrapper.addEventListener('touchstart', onPointerDown, { passive: false });
-
-    window.addEventListener('mousemove', onPointerMove);
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
-
-    window.addEventListener('mouseup', onPointerUp);
-    window.addEventListener('touchend', onPointerUp);
-
-    mapWrapper.addEventListener('wheel', onWheel, { passive: false });
-
-    // Zoom Butonları
-    document.getElementById('zoom-in').onclick = () => manualZoom(1.3);
-    document.getElementById('zoom-out').onclick = () => manualZoom(0.7);
-    document.getElementById('zoom-reset').onclick = resetZoom;
-
     // ──────────────────────────────────────────────
-    // UYGULAMA MANTIĞI (VERİ & SEÇİM)
+    // UYGULAMA MANTIĞI & GLOBAL DEĞİŞKENLER
     // ──────────────────────────────────────────────
     let countryData = {};
     let currentCountryId = null;
     let currentGroup = null;
     let activePath = null;
     let searchMode = 'country';
+    let activeFilterCategory = 'all';
 
     // Drag vs Click ayırımı için değişkenler
     let touchStartTime = 0;
@@ -971,39 +955,79 @@
       longTitle: document.getElementById("long-detail-title")
     };
 
-    // Veri Yükleme
-    // Veri Yükleme (JSON Dosyasından)
-    function loadFromJSON() {
-      fetch('trdata.json')
-        .then(response => {
-          if (!response.ok) throw new Error("JSON dosyası bulunamadı veya yüklenemedi.");
-          return response.json();
+    // Veri Yükleme (Önce JSON, sonra LocalStorage)
+    function loadData() {
+      fetch('trdata.json?t=' + Date.now())
+        .then(res => {
+          if (!res.ok) throw new Error("Dosya bulunamadı");
+          return res.json();
         })
         .then(data => {
           countryData = data;
-          console.log("Veri trdata.json dosyasından yüklendi.");
-          initMapInteractions();
-          // Eğer arama yapılmışsa güncelle
-          if (dom.searchInput.value) runSearch();
+          console.log("Veri yüklendi.");
           updateTotalCount();
+          if (dom.searchInput.value) runSearch();
         })
         .catch(err => {
-          console.error("Veri yükleme hatası:", err);
-          // Hata durumunda kullanıcıyı bilgilendir
-          alert("Veri yüklenemedi: " + err.message + "\nLütfen dosyayı bir sunucu üzerinden (localhost) açtığınızdan veya trdata.json dosyasının mevcut olduğundan emin olun.");
+          console.warn("JSON başarısız, LocalStorage deneniyor...");
+          const s = localStorage.getItem('militan_db_v2');
+          if (s) {
+            try {
+              countryData = JSON.parse(s);
+              updateTotalCount();
+            } catch (e) { console.error("LS Hata:", e); }
+          }
         });
     }
 
-    // Başlat
-    loadFromJSON();
+    function initListeners() {
+      // Map Zoom/Pan dinleyicileri
+      mapWrapper.addEventListener('mousedown', onPointerDown);
+      mapWrapper.addEventListener('touchstart', onPointerDown, { passive: false });
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('touchmove', onPointerMove, { passive: false });
+      window.addEventListener('mouseup', onPointerUp);
+      window.addEventListener('touchend', onPointerUp);
+      mapWrapper.addEventListener('wheel', onWheel, { passive: false });
 
-    function initMapInteractions() {
+      // Zoom Butonları
+      if (document.getElementById('zoom-in')) document.getElementById('zoom-in').onclick = () => manualZoom(1.3);
+      if (document.getElementById('zoom-out')) document.getElementById('zoom-out').onclick = () => manualZoom(0.7);
+      if (document.getElementById('zoom-reset')) document.getElementById('zoom-reset').onclick = resetZoom;
+
+      // Arayüz Etkileşimleri
+      if (dom.searchFab) dom.searchFab.addEventListener("click", openSidebar);
+      if (document.getElementById("sidebar-close")) document.getElementById("sidebar-close").addEventListener("click", resetApplicationState);
+      if (dom.searchInput) dom.searchInput.addEventListener("input", () => {
+        toggleClearButton();
+        runSearch();
+      });
+
+      // Modal Kapatma
+      document.addEventListener('keydown', (e) => { if (e.key === "Escape") resetApplicationState(); });
+      if (dom.sidebarBackdrop) dom.sidebarBackdrop.addEventListener('click', () => resetApplicationState());
+
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) resetApplicationState(false);
+        });
+      });
+
+      // Harita Arka Planına Tıklayınca Kapat
+      const mapWrap = document.getElementById("map-wrapper");
+      if (mapWrap) {
+        mapWrap.addEventListener("click", (e) => {
+          if (e.target.id === "map-wrapper" || e.target.id === "svg-map") {
+            resetApplicationState();
+          }
+        });
+      }
+
+      // Harita Path Dinleyicileri
       document.querySelectorAll("svg path").forEach(path => {
         const id = path.id;
         const name = path.getAttribute("data-name") || id;
 
-        // "Sürükleme mi yoksa Tıklama mı?" kontrolü
-        // Pan yaparken yanlışlıkla tıklamayı engellemek için.
         path.addEventListener('mousedown', e => {
           touchStartTime = Date.now();
           touchStartCoords = { x: e.clientX, y: e.clientY };
@@ -1013,31 +1037,25 @@
           touchStartCoords = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }, { passive: true });
 
-        // Tıklama Olayı (Hem PC Hem Mobil için 'click' yeterlidir, ancak koordinat kontrolü şart)
         path.addEventListener("click", e => {
-          e.stopPropagation(); // Harita boşluk tıklamasını engelle
-
-          // Eğer kullanıcı haritayı sürüklediyse (Pan), bunu tıklama olarak sayma
-          const dx = Math.abs(e.clientX - touchStartCoords.x);
-          const dy = Math.abs(e.clientY - touchStartCoords.y);
-          if (dx > 5 || dy > 5) return; // 5 pikselden fazla hareket varsa tıklama iptal
-
+          e.stopPropagation();
+          const dx = Math.abs((e.clientX || (e.changedTouches && e.changedTouches[0].clientX)) - touchStartCoords.x);
+          const dy = Math.abs((e.clientY || (e.changedTouches && e.changedTouches[0].clientY)) - touchStartCoords.y);
+          if (dx > 5 || dy > 5) return;
           selectCountry(id, name, path);
         });
 
-        // Hover Tooltip (Sadece PC için Mouse olayları)
         path.addEventListener("mouseover", e => {
           const cData = countryData[id];
           const groupCount = cData && cData.groups ? cData.groups.length : 0;
-          let html = `<span style="font-weight:bold;color:#4ade80;display:block;">${cData ? (cData.name_tr || name) : name}</span>`;
-
+          let tipHtml = `<span style="font-weight:bold;color:#4ade80;display:block;">${cData ? (cData.name_tr || name) : name}</span>`;
           if (groupCount > 0) {
             let groupNames = cData.groups.map(g => g.name_tr);
             let displayNames = groupNames.slice(0, 3).join(", ");
             if (groupNames.length > 3) displayNames += ", ...";
-            html += `<span style="font-size:11px;color:#aaa;border-top:1px solid #444;margin-top:2px;padding-top:2px;display:block;">${groupCount} Grup: ${displayNames}</span>`;
+            tipHtml += `<span style="font-size:11px;color:#aaa;border-top:1px solid #444;margin-top:2px;padding-top:2px;display:block;">${groupCount} Grup: ${displayNames}</span>`;
           }
-          dom.tooltip.innerHTML = html;
+          dom.tooltip.innerHTML = tipHtml;
           dom.tooltip.classList.add("visible");
         });
 
@@ -1047,22 +1065,13 @@
         });
         path.addEventListener("mouseout", () => dom.tooltip.classList.remove("visible"));
       });
-
-      // Arayüz Etkileşimleri
-      dom.searchFab.addEventListener("click", openSidebar);
-      document.getElementById("sidebar-close").addEventListener("click", resetApplicationState);
-      dom.searchInput.addEventListener("input", runSearch);
-
-      // Modal Kapatma
-      document.addEventListener('keydown', (e) => { if (e.key === "Escape") resetApplicationState(); });
-      dom.sidebarBackdrop.addEventListener('click', resetApplicationState);
-
-      document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) resetApplicationState(false);
-        });
-      });
     }
+
+    // Uygulamayı Başlat
+    initListeners();
+    loadData();
+
+    // (Aşağıdaki kısımlar artik initListeners içinde)
 
     function openSidebar() {
       const badge = document.getElementById('total-badge');
@@ -1103,12 +1112,6 @@
       dom.longModal.classList.remove("active");
     }
 
-    // Harita Arka Planına Tıklayınca Kapat
-    document.getElementById("map-wrapper").addEventListener("click", (e) => {
-      if (e.target.id === "map-wrapper" || e.target.id === "svg-map") {
-        resetApplicationState();
-      }
-    });
 
     function goToCountry(id, name) {
       selectCountry(id, name, null);
@@ -1157,7 +1160,6 @@
       dom.sidebarContent.scrollTop = 0;
     }
 
-    let activeFilterCategory = null;
     function setFilter(cat) {
       activeFilterCategory = cat;
       // Buton görselliği (seçili olanı parlat, diğerlerini söndür)
@@ -1178,10 +1180,6 @@
       else btn.style.display = 'none';
     }
 
-    dom.searchInput.addEventListener('input', () => {
-      toggleClearButton();
-      runSearch();
-    });
 
     function runSearch() {
       const term = dom.searchInput.value.toLowerCase().trim();
@@ -1290,42 +1288,6 @@
       dom.sidebarContent.innerHTML = html;
     }
 
-    // Veri Yükleme (Önce JSON, sonra LocalStorage)
-    function loadFromStorage() {
-      fetch('trdata.json?t=' + Date.now())
-        .then(res => {
-          if (!res.ok) throw new Error("Dosya okunamadı (404/500)");
-          return res.json();
-        })
-        .then(data => {
-          if (Array.isArray(data)) {
-            console.error("HATA: JSON verisi bir liste (Array) formatında. Uygulama bir nesne (Object) bekliyor. Admin panelden verinizi kontrol edin.");
-          }
-          console.log("Veri başarıyla yüklendi:", Object.keys(data).length, "id bulundu.");
-          countryData = data;
-          updateTotalCount();
-          initMapInteractions();
-        })
-        .catch(err => {
-          console.warn("trdata.json yüklenemedi, LocalStorage deneniyor...", err);
-
-          const s = localStorage.getItem('militan_db_v2');
-          if (s) {
-            try {
-              countryData = JSON.parse(s);
-              console.log("Veri LocalStorage'dan yüklendi.");
-              updateTotalCount();
-              initMapInteractions();
-            } catch (e) {
-              console.error("LocalStorage verisi bozuk:", e);
-              initMapInteractions();
-            }
-          } else {
-            console.warn("Veri bulunamadı.");
-            initMapInteractions();
-          }
-        });
-    }
 
     function updateTotalCount() {
       const uniqueNames = new Set();
@@ -1544,171 +1506,4 @@
       });
 
       html += `
-            <div style="margin-top:60px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; font-style: italic;">
-                Bu rapor Militan Atlası dijital veritabanından otomatik olarak oluşturulmuştur. <br>
-                © ${new Date().getFullYear()} Militan Atlası Projesi. Tüm hakları saklıdır.
-            </div>
-        </body>
-        </html>
-      `;
-
-      printWindow.document.write(html);
-      printWindow.document.close();
-    }
-
-    // ──────────────────────────────────────────────
-    // METİN İÇİ LİNKLEME (ÖRGÜT İSİMLERİ)
-    // ──────────────────────────────────────────────
-    function processTextLinks(text) {
-      if (!text) return "";
-
-      function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      }
-
-      const allGroupNames = new Set();
-      Object.values(countryData).forEach(c => {
-        if (c.groups) c.groups.forEach(g => {
-          if (g.name_tr) allGroupNames.add(g.name_tr);
-        });
-      });
-
-      const sortedNames = Array.from(allGroupNames).sort((a, b) => b.length - a.length);
-
-      let processedText = text;
-      let placeholders = [];
-
-      sortedNames.forEach(name => {
-        if (currentGroup && name === currentGroup.name_tr) return;
-
-        const escapedName = escapeRegExp(name);
-        const regex = new RegExp(`(${escapedName})`, 'gi');
-        const safeName = name.replace(/'/g, "\\'");
-
-        processedText = processedText.replace(regex, (match) => {
-          const p = `##LINK_${placeholders.length}##`;
-          placeholders.push(`<span class="interactive-link" onclick="goToGroupByName('${safeName}')">${match}</span>`);
-          return p;
-        });
-      });
-
-      // Placeholderları asıl linklerle değiştir
-      placeholders.forEach((html, i) => {
-        processedText = processedText.replace(`##LINK_${i}##`, html);
-      });
-
-      return processedText;
-    }
-
-    function goToGroupByName(name) {
-      // İsme göre grubu bul
-      let foundCountryId = null;
-      let foundGroupIdx = null;
-
-      Object.keys(countryData).forEach(cid => {
-        const c = countryData[cid];
-        if (c.groups) {
-          c.groups.forEach((g, idx) => {
-            if (g.name_tr && g.name_tr.toLowerCase() === name.toLowerCase()) {
-              foundCountryId = cid;
-              foundGroupIdx = idx;
-            }
-          });
-        }
-      });
-
-      if (foundCountryId) {
-        goToGroup(foundCountryId, foundGroupIdx);
-      } else {
-        alert("Bu grup veritabanında bulunamadı: " + name);
-      }
-    }
-
-    function selectCountry(id, name, pathEl) {
-      if (activePath) activePath.classList.remove("active");
-      const target = pathEl || document.getElementById(id);
-      if (target) {
-        target.classList.add("active");
-        activePath = target;
-      }
-      currentCountryId = id;
-      const cData = countryData[id];
-      const dispName = cData ? (cData.name_tr || name) : name;
-
-      dom.countryTitle.textContent = dispName;
-      let html = "";
-
-      // Detaylı modda ve aktif filtre varsa sadece o kategorideki grupları göster
-      let groupsToShow = [];
-      if (cData && cData.groups && cData.groups.length > 0) {
-        if (searchMode === 'detailed' && activeFilterCategory && activeFilterCategory !== 'all') {
-          let targetCategory = "";
-          if (activeFilterCategory === 'cihat') targetCategory = "Cihatçı";
-          else if (activeFilterCategory === 'ayrilik') targetCategory = "Ayrılıkçı";
-          else targetCategory = "Diğer";
-
-          cData.groups.forEach((g, idx) => {
-            const cat = g.kategori || "Diğer";
-            if (cat === targetCategory || (targetCategory === "Diğer" && cat !== "Cihatçı" && cat !== "Ayrılıkçı")) {
-              groupsToShow.push({ g, idx });
-            }
-          });
-        } else {
-          // Normal mod: tüm grupları göster
-          cData.groups.forEach((g, idx) => groupsToShow.push({ g, idx }));
-        }
-
-        if (groupsToShow.length > 0) {
-          groupsToShow.forEach(({ g, idx }) => {
-            let dotColor = "#888";
-            if (g.kategori === "Cihatçı") dotColor = "#ef4444";
-            else if (g.kategori === "Ayrılıkçı") dotColor = "#eab308";
-            else dotColor = "#3b82f6";
-
-            html += `<div class="group-item" onclick="openGroupDetail(${idx})" style="border-left-color:${dotColor};">
-                            ${g.name_tr} 
-                            <span style="float:right;font-size:10px;color:#aaa;background:#333;padding:2px 6px;border-radius:4px;">${g.kategori || "Diğer"}</span>
-                         </div>`;
-          });
-        } else {
-          html = "<p style='text-align:center;color:#666;padding:20px;'>Bu kategoride grup bulunamadı.</p>";
-        }
-      } else {
-        html = "<p style='text-align:center;color:#666;padding:20px;'>Kayıtlı grup bulunamadı.</p>";
-      }
-      dom.countryGroups.innerHTML = html;
-      dom.countryModal.classList.add("active");
-    }
-    // ──────────────────────────────────────────────
-    // MOBİL SWIPE MANTIĞI (KAPATMAK İÇİN)
-    // ──────────────────────────────────────────────
-    let touchStart = { x: 0, y: 0 };
-    let touchEnd = { x: 0, y: 0 };
-
-    dom.sidebar.addEventListener('touchstart', e => {
-      touchStart.x = e.changedTouches[0].screenX;
-      touchStart.y = e.changedTouches[0].screenY;
-    }, { passive: true });
-
-    dom.sidebar.addEventListener('touchend', e => {
-      touchEnd.x = e.changedTouches[0].screenX;
-      touchEnd.y = e.changedTouches[0].screenY;
-      handleSwipe();
-    }, { passive: true });
-
-    function handleSwipe() {
-      const isMobile = window.innerWidth <= 768;
-
-      if (isMobile) {
-        // Mobilde: AŞAĞI KAYDIRMA (Swipe Down) kapatır
-        if (touchEnd.y > touchStart.y + 70) {
-          resetApplicationState();
-        }
-      } else {
-        // PC/Tablet (Sağ Panel): SAĞA KAYDIRMA (Swipe Right) kapatır
-        if (touchEnd.x > touchStart.x + 70) {
-          resetApplicationState();
-        }
-      }
-    }
-    fun
+            <div style="margin-top:60px; text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; font-style: ital
