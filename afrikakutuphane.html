@@ -703,6 +703,7 @@
 
             Object.keys(countryData).forEach(id => {
                 const country = countryData[id];
+                const countryNameTR = getCountryNameTR(id);
                 if (country.groups) {
                     country.groups.forEach((g, idx) => {
                         const name = g.name_tr;
@@ -719,7 +720,7 @@
 
                         const matchesSearch = !searchTerm ||
                             (name && name.toLowerCase().includes(searchTerm)) ||
-                            country.name_tr.toLowerCase().includes(searchTerm);
+                            countryNameTR.toLowerCase().includes(searchTerm);
 
                         if (matchesFilter && matchesSearch) {
                             if (!groupMap[name]) {
@@ -727,11 +728,11 @@
                                     group: g,
                                     cid: id,
                                     gidx: idx,
-                                    countries: [country.name_tr]
+                                    countries: [countryNameTR]
                                 };
                             } else {
-                                if (!groupMap[name].countries.includes(country.name_tr)) {
-                                    groupMap[name].countries.push(country.name_tr);
+                                if (!groupMap[name].countries.includes(countryNameTR)) {
+                                    groupMap[name].countries.push(countryNameTR);
                                 }
                             }
                         }
@@ -783,6 +784,9 @@
                 item.onmouseout = () => item.style.background = 'rgba(30, 41, 59, 0.3)';
 
                 item.onclick = () => openGroupModal(m.cid, m.gidx);
+
+                // Ülkeleri alfabetik sırala
+                m.countries.sort((a, b) => a.localeCompare(b, 'tr'));
 
                 item.innerHTML = `
                     <div style="flex:1;">
