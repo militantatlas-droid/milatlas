@@ -33,10 +33,11 @@
     "groups": [
       {
         "name_tr": "Ensar'ul İslam",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "denemesadasjhdkasdhjkasdsad",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "asdasd.",
           "yonetim_yapisi": ".asd.",
           "eylem_metotlari": ".asd.",
@@ -98,8 +99,8 @@
     "name_tr": "Kamerun",
     "groups": [
       {
-        "name_tr": "Boko Haram (Kamerun Kolu)",
-        "kategori": "Cihadist",
+        "name_tr": "Ambazonya Savunma Güçleri",
+        "kategori": "Ayrılıkçı",
         "details": {
           "grup_durumu": "Aktif",
           "olusum_sureci": "...",
@@ -114,11 +115,12 @@
         }
       },
       {
-        "name_tr": "Ambazonya Savunma Güçleri",
-        "kategori": "Ayrılıkçı",
+        "name_tr": "Boko Haram (Kamerun Kolu)",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -198,10 +200,11 @@
     "groups": [
       {
         "name_tr": "AQIM (İslami Mağrip El Kaidesi)",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -210,14 +213,6 @@
           "grup_iliskileri": "...",
           "diger_bilgiler": "...",
           "kaynakca": "..."
-        }
-      },
-      {
-        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><br></p>"
         }
       }
     ]
@@ -227,10 +222,11 @@
     "groups": [
       {
         "name_tr": "Sina Vilayeti (IŞİD)",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif/Zayıflamış",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -239,14 +235,6 @@
           "grup_iliskileri": "...",
           "diger_bilgiler": "...",
           "kaynakca": "..."
-        }
-      },
-      {
-        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><br></p>"
         }
       }
     ]
@@ -321,10 +309,11 @@
     "groups": [
       {
         "name_tr": "El-Şebab (Kenya Hücreleri)",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -359,14 +348,6 @@
           "diger_bilgiler": "...",
           "kaynakca": "..."
         }
-      },
-      {
-        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><br></p>"
-        }
       }
     ]
   },
@@ -376,16 +357,7 @@
   },
   "MA": {
     "name_tr": "Fas",
-    "groups": [
-      {
-        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><br></p>"
-        }
-      }
-    ]
+    "groups": []
   },
   "MG": {
     "name_tr": "Madagaskar",
@@ -395,11 +367,29 @@
     "name_tr": "Mali",
     "groups": [
       {
-        "name_tr": "IŞİD-GS (Büyük Sahra)",
-        "kategori": "Cihadist",
+        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
+          "nihai_hedef": "...",
+          "yonetim_yapisi": "...",
+          "eylem_metotlari": "...",
+          "onemli_eylemler": "...",
+          "finansman_kaynaklari": "...",
+          "grup_iliskileri": "...",
+          "diger_bilgiler": "...",
+          "kaynakca": "..."
+        }
+      },
+      {
+        "name_tr": "IŞİD-GS (Büyük Sahra)",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
+        "details": {
+          "grup_durumu": "Aktif",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -417,10 +407,11 @@
     "groups": [
       {
         "name_tr": "IŞİD-Mozambik (El-Şebab)",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -450,10 +441,11 @@
     "groups": [
       {
         "name_tr": "IŞİD-Batı Afrika",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -470,11 +462,28 @@
     "name_tr": "Nijerya",
     "groups": [
       {
-        "name_tr": "Boko Haram (JAS)",
-        "kategori": "Cihadist",
+        "name_tr": "IPOB (Biafra Yerli Halkları)",
+        "kategori": "Ayrılıkçı",
         "details": {
           "grup_durumu": "Aktif",
           "olusum_sureci": "...",
+          "nihai_hedef": "...",
+          "yonetim_yapisi": "...",
+          "eylem_metotlari": "...",
+          "onemli_eylemler": "...",
+          "finansman_kaynaklari": "...",
+          "grup_iliskileri": "...",
+          "diger_bilgiler": "...",
+          "kaynakca": "..."
+        }
+      },
+      {
+        "name_tr": "Boko Haram (JAS)",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
+        "details": {
+          "grup_durumu": "Aktif",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -487,26 +496,11 @@
       },
       {
         "name_tr": "ISWAP (IŞİD Batı Afrika)",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
-          "nihai_hedef": "...",
-          "yonetim_yapisi": "...",
-          "eylem_metotlari": "...",
-          "onemli_eylemler": "...",
-          "finansman_kaynaklari": "...",
-          "grup_iliskileri": "...",
-          "diger_bilgiler": "...",
-          "kaynakca": "..."
-        }
-      },
-      {
-        "name_tr": "IPOB (Biafra Yerli Halkları)",
-        "kategori": "Ayrılıkçı",
-        "details": {
-          "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -545,10 +539,11 @@
     "groups": [
       {
         "name_tr": "Polisario Cephesi",
-        "kategori": "Ayrılıkçı / Ulusal Kurtuluş",
+        "kategori": "Ayrılıkçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -659,25 +654,7 @@
   },
   "TN": {
     "name_tr": "Tunus",
-    "groups": [
-      {
-        "name_tr": "DENEMER",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p>...</p>",
-          "grup_iliskileri": "<p>JNIM (Cemaat Nusret el-İslam vel-Müslimin) GRUBU İLE BAĞLANTILI</p>"
-        }
-      },
-      {
-        "name_tr": "JNIM (Cemaat Nusret el-İslam vel-Müslimin)",
-        "kategori": "Cihatçı",
-        "grup_durumu": "Aktif",
-        "details": {
-          "olusum_sureci": "<p><br></p>"
-        }
-      }
-    ]
+    "groups": []
   },
   "TZ": {
     "name_tr": "Tanzanya",
@@ -721,10 +698,11 @@
     "groups": [
       {
         "name_tr": "El-Şebab",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
@@ -737,10 +715,11 @@
       },
       {
         "name_tr": "IŞİD-Somali",
-        "kategori": "Cihadist",
+        "kategori": "Cihatçı",
+        "grup_durumu": "Bilinmiyor",
         "details": {
           "grup_durumu": "Aktif",
-          "olusum_sureci": "...",
+          "olusum_sureci": "<p><br></p>",
           "nihai_hedef": "...",
           "yonetim_yapisi": "...",
           "eylem_metotlari": "...",
