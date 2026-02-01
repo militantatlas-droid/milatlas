@@ -541,30 +541,47 @@
 
         // Load data
         function loadData() {
-            fetch('trdata.json?t=' + Date.now())
-                .then(response => {
-                    if (!response.ok) throw new Error("JSON dosyası bulunamadı.");
-                    return response.json();
-                })
-                .then(data => {
-                    countryData = data;
-                    console.log("Veri trdata.json dosyasından yüklendi.");
-                    processLoadedData();
-                })
-                .catch(err => {
-                    console.warn("trdata.json yüklenemedi, LocalStorage deneniyor...", err);
+            const sources = ['trdata.json', 'incele.json'];
+            let currentSourceIndex = 0;
+
+            function tryNextSource() {
+                if (currentSourceIndex < sources.length) {
+                    const src = sources[currentSourceIndex] + '?t=' + Date.now();
+                    fetch(src)
+                        .then(res => {
+                            if (!res.ok) throw new Error(sources[currentSourceIndex] + " bulunamadı");
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                                console.log("Veri yüklendi:", sources[currentSourceIndex]);
+                                countryData = data;
+                                processLoadedData();
+                            } else {
+                                throw new Error("Geçersiz veri formatı: " + sources[currentSourceIndex]);
+                            }
+                        })
+                        .catch(err => {
+                            console.warn(err.message);
+                            currentSourceIndex++;
+                            tryNextSource();
+                        });
+                } else {
                     const s = localStorage.getItem('militan_db_v2');
                     if (s) {
                         try {
                             countryData = JSON.parse(s);
+                            console.log("Veri LocalStorage'dan yüklendi.");
                             processLoadedData();
                         } catch (e) {
-                            showError(err.message);
+                            showError("LocalStorage verisi bozuk.");
                         }
                     } else {
-                        showError(err.message);
+                        showError("Hiçbir veri kaynağı bulunamadı.");
                     }
-                });
+                }
+            }
+            tryNextSource();
         }
 
         function processLoadedData() {
@@ -603,9 +620,13 @@
                     c.groups.forEach(g => {
                         const name = g.name_tr.trim();
                         uniqueNames.add(name);
-                        const cat = g.kategori || "Diğer";
-                        if (cat === "Cihatçı") cihatSet.add(name);
-                        else if (cat === "Ayrılıkçı") ayrilikSet.add(name);
+                        const gCatRaw = g.kategori || "Diğer";
+                        let gCat = gCatRaw;
+                        if (gCatRaw.toLowerCase().includes("cihad") || gCatRaw.toLowerCase().includes("cihat")) gCat = "Cihatçı";
+                        else if (gCatRaw.toLowerCase().includes("ayrilik") || gCatRaw.toLowerCase().includes("ayrılık")) gCat = "Ayrılıkçı";
+
+                        if (gCat === "Cihatçı") cihatSet.add(name);
+                        else if (gCat === "Ayrılıkçı") ayrilikSet.add(name);
                         else digerSet.add(name);
                     });
                 }
@@ -680,12 +701,16 @@
                 if (country.groups) {
                     country.groups.forEach((g, idx) => {
                         const name = g.name_tr;
-                        const cat = g.kategori || "Diğer";
+                        const gCatRaw = g.kategori || "Diğer";
+                        let gCat = gCatRaw;
+                        if (gCatRaw.toLowerCase().includes("cihad") || gCatRaw.toLowerCase().includes("cihat")) gCat = "Cihatçı";
+                        else if (gCatRaw.toLowerCase().includes("ayrilik") || gCatRaw.toLowerCase().includes("ayrılık")) gCat = "Ayrılıkçı";
+
                         // Filter check
                         const matchesFilter = currentFilter === 'all' ||
-                            (currentFilter === 'cihat' && cat === 'Cihatçı') ||
-                            (currentFilter === 'ayrilik' && cat === 'Ayrılıkçı') ||
-                            (currentFilter === 'diger' && cat !== 'Cihatçı' && cat !== 'Ayrılıkçı');
+                            (currentFilter === 'cihat' && gCat === 'Cihatçı') ||
+                            (currentFilter === 'ayrilik' && gCat === 'Ayrılıkçı') ||
+                            (currentFilter === 'diger' && gCat !== 'Cihatçı' && gCat !== 'Ayrılıkçı');
 
                         const matchesSearch = !searchTerm ||
                             (name && name.toLowerCase().includes(searchTerm)) ||
@@ -729,9 +754,13 @@
 
             sortedGroups.forEach(m => {
                 const g = m.group;
-                const cat = g.kategori || "Diğer";
-                const catClass = cat === 'Cihatçı' ? 'category-cihat' :
-                    cat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
+                const gCatRaw = g.kategori || "Diğer";
+                let gCat = gCatRaw;
+                if (gCatRaw.toLowerCase().includes("cihad") || gCatRaw.toLowerCase().includes("cihat")) gCat = "Cihatçı";
+                else if (gCatRaw.toLowerCase().includes("ayrilik") || gCatRaw.toLowerCase().includes("ayrılık")) gCat = "Ayrılıkçı";
+
+                const catClass = gCat === 'Cihatçı' ? 'category-cihat' :
+                    gCat === 'Ayrılıkçı' ? 'category-ayrilik' : 'category-diger';
 
                 const item = document.createElement('div');
                 item.className = 'group-item';
@@ -757,7 +786,7 @@
                             <i class="fas fa-globe-africa"></i> ${m.countries.join(", ")}
                         </div>
                     </div>
-                    <div class="group-category ${catClass}" style="margin-left:15px; min-width:100px; text-align:center;">${cat}</div>
+                    <div class="group-category ${catClass}" style="margin-left:15px; min-width:100px; text-align:center;">${gCat}</div>
                 `;
                 container.appendChild(item);
             });
